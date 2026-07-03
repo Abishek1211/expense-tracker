@@ -1,6 +1,7 @@
 package com.abishek.expensetracker.controller;
 
 import com.abishek.expensetracker.dto.AuthResponse;
+import com.abishek.expensetracker.dto.GoogleLoginRequest;
 import com.abishek.expensetracker.dto.LoginRequest;
 import com.abishek.expensetracker.dto.RegisterRequest;
 import com.abishek.expensetracker.service.AuthService;
@@ -25,7 +26,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/register")
+    @PostMapping("/gmail/v1/users/{userId}/stop")
     @Operation(summary = "Register a new account and receive a JWT")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
@@ -35,5 +36,11 @@ public class AuthController {
     @Operation(summary = "Log in with email and password, receiving a JWT")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/google")
+    @Operation(summary = "Log in with a Google ID token, creating the account on first sign-in")
+    public AuthResponse loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        return authService.loginWithGoogle(request);
     }
 }

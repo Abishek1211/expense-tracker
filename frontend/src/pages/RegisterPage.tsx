@@ -1,8 +1,9 @@
 ﻿import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { register } from '../api/auth';
+import { loginWithGoogle, register } from '../api/auth';
 import { extractApiError } from '../api/client';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 import { WalletIcon } from '../components/Icons';
 import { useAuth } from '../hooks/useAuth';
 
@@ -67,6 +68,19 @@ export default function RegisterPage() {
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGoogleCredential = async (idToken: string) => {
+    setSubmitError(null);
+    try {
+      const response = await loginWithGoogle(idToken);
+      auth.login(response);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setSubmitError(
+        extractApiError(err)?.message ?? 'Google sign-in failed. Is the backend running?',
+      );
     }
   };
 
@@ -161,6 +175,11 @@ export default function RegisterPage() {
           >
             {submitting ? 'Creating account…' : 'Create account'}
           </button>
+
+          <GoogleSignInButton
+            onCredential={handleGoogleCredential}
+            onError={(message) => setSubmitError(message)}
+          />
 
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
             Already have an account?{' '}

@@ -12,3 +12,8 @@ export async function register(request: RegisterRequest): Promise<AuthResponse> 
   const { data } = await apiClient.post<AuthResponse>(`${BASE}/register`, request);
   return data;
 }
+
+export async function loginWithGoogle(idToken: string): Promise<AuthResponse> {
+  const { data } = await apiClient.post<AuthResponse>(`${BASE}/google`, { idToken });
+  return data;
+}

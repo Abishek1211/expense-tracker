@@ -1,12 +1,15 @@
 package com.abishek.expensetracker.service;
 
 import com.abishek.expensetracker.dto.AuthResponse;
+import com.abishek.expensetracker.dto.GoogleLoginRequest;
 import com.abishek.expensetracker.dto.LoginRequest;
 import com.abishek.expensetracker.dto.RegisterRequest;
 import com.abishek.expensetracker.exception.EmailAlreadyRegisteredException;
+import com.abishek.expensetracker.exception.GoogleAuthException;
 import com.abishek.expensetracker.exception.InvalidCredentialsException;
 import com.abishek.expensetracker.model.User;
 import com.abishek.expensetracker.repository.UserRepository;
+import com.abishek.expensetracker.security.GoogleTokenVerifier;
 import com.abishek.expensetracker.security.JwtService;
 import com.abishek.expensetracker.service.impl.AuthServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +19,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +37,9 @@ class AuthServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private GoogleTokenVerifier googleTokenVerifier;
+
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final JwtService jwtService = new JwtService("test-only-jwt-secret-0123456789abcdef", 60);
 
@@ -39,7 +47,7 @@ class AuthServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new AuthServiceImpl(userRepository, passwordEncoder, jwtService);
+        service = new AuthServiceImpl(userRepository, passwordEncoder, jwtService, googleTokenVerifier);
     }
 
     @Test
@@ -90,5 +98,58 @@ class AuthServiceImplTest {
 
         assertThatThrownBy(() -> service.login(new LoginRequest("ghost@example.com", "whatever")))
                 .isInstanceOf(InvalidCredentialsException.class);
+    }
+
+    @Test
+    void loginRejectsPasswordForGoogleOnlyAccount() {
+        User user = User.googleUser("abi@example.com", "Abi");
+        when(userRepository.findByEmailIgnoreCase("abi@example.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.login(new LoginRequest("abi@example.com", "whatever")))
+                .isInstanceOf(InvalidCredentialsException.class);
+    }
+
+    @Test
+    void googleLoginCreatesUserOnFirstSignIn() {
+        when(googleTokenVerifier.verify("google-token")).thenReturn(googleIdToken(
+                Map.of("email", "Abi@Gmail.com", "email_verified", true, "name", "Abi R")));
+        when(userRepository.findByEmailIgnoreCase("abi@gmail.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AuthResponse response = service.loginWithGoogle(new GoogleLoginRequest("google-token"));
+
+        assertThat(response.email()).isEqualTo("abi@gmail.com");
+        assertThat(response.displayName()).isEqualTo("Abi R");
+        assertThat(jwtService.extractSubject(response.token())).contains("abi@gmail.com");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void googleLoginReusesExistingAccountWithMatchingEmail() {
+        User existing = new User("abi@gmail.com", passwordEncoder.encode("secret-password"), "Abi");
+        when(googleTokenVerifier.verify("google-token")).thenReturn(googleIdToken(
+                Map.of("email", "abi@gmail.com", "email_verified", true, "name", "Abi R")));
+        when(userRepository.findByEmailIgnoreCase("abi@gmail.com")).thenReturn(Optional.of(existing));
+
+        AuthResponse response = service.loginWithGoogle(new GoogleLoginRequest("google-token"));
+
+        assertThat(response.displayName()).isEqualTo("Abi");
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void googleLoginRejectsUnverifiedEmail() {
+        when(googleTokenVerifier.verify("google-token")).thenReturn(googleIdToken(
+                Map.of("email", "abi@gmail.com", "email_verified", false)));
+
+        assertThatThrownBy(() -> service.loginWithGoogle(new GoogleLoginRequest("google-token")))
+                .isInstanceOf(GoogleAuthException.class);
+        verify(userRepository, never()).save(any());
+    }
+
+    private Jwt googleIdToken(Map<String, Object> claims) {
+        Jwt.Builder builder = Jwt.withTokenValue("google-token").header("alg", "RS256");
+        claims.forEach(builder::claim);
+        return builder.build();
     }
 }

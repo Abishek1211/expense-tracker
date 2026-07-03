@@ -50,7 +50,7 @@ function BudgetRow({ category, budget, spent }: BudgetRowProps) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="glass rounded-2xl p-5 transition-shadow hover:shadow-md">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span
