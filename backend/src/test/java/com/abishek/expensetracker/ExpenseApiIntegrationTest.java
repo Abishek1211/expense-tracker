@@ -1,5 +1,6 @@
 package com.abishek.expensetracker;
 
+import com.abishek.expensetracker.dto.AuthResponse;
 import com.abishek.expensetracker.dto.ExpenseResponse;
 import com.abishek.expensetracker.model.Category;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,12 +43,89 @@ class ExpenseApiIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static String token;
     private static Long createdId;
 
     private static final String BASE = "/api/v1/expenses";
+    private static final String AUTH = "/api/v1/auth";
+
+    private HttpHeaders authHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        return headers;
+    }
+
+    private <T> HttpEntity<T> authorized(T body) {
+        return new HttpEntity<>(body, authHeaders());
+    }
 
     @Test
     @Order(1)
+    void expensesRequireAuthentication() throws Exception {
+        ResponseEntity<String> response = restTemplate.getForEntity(BASE, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.get("status").asInt()).isEqualTo(401);
+    }
+
+    @Test
+    @Order(2)
+    void registerReturns201WithToken() {
+        Map<String, Object> request = Map.of(
+                "email", "abi@example.com",
+                "password", "super-secret-1",
+                "displayName", "Abi");
+
+        ResponseEntity<AuthResponse> response =
+                restTemplate.postForEntity(AUTH + "/register", request, AuthResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().token()).isNotBlank();
+        assertThat(response.getBody().email()).isEqualTo("abi@example.com");
+    }
+
+    @Test
+    @Order(3)
+    void duplicateRegistrationReturns409() {
+        Map<String, Object> request = Map.of(
+                "email", "abi@example.com",
+                "password", "super-secret-1",
+                "displayName", "Abi");
+
+        ResponseEntity<String> response =
+                restTemplate.postForEntity(AUTH + "/register", request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @Order(4)
+    void loginReturnsToken() {
+        Map<String, Object> request = Map.of("email", "abi@example.com", "password", "super-secret-1");
+
+        ResponseEntity<AuthResponse> response =
+                restTemplate.postForEntity(AUTH + "/login", request, AuthResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        token = response.getBody().token();
+    }
+
+    @Test
+    @Order(5)
+    void wrongPasswordReturns401() {
+        Map<String, Object> request = Map.of("email", "abi@example.com", "password", "wrong-password");
+
+        ResponseEntity<String> response =
+                restTemplate.postForEntity(AUTH + "/login", request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @Order(6)
     void createReturns201WithLocationHeader() {
         Map<String, Object> request = Map.of(
                 "amount", 25.99,
@@ -55,7 +134,7 @@ class ExpenseApiIntegrationTest {
                 "note", "Groceries");
 
         ResponseEntity<ExpenseResponse> response =
-                restTemplate.postForEntity(BASE, request, ExpenseResponse.class);
+                restTemplate.postForEntity(BASE, authorized(request), ExpenseResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getHeaders().getLocation()).isNotNull();
@@ -65,13 +144,14 @@ class ExpenseApiIntegrationTest {
     }
 
     @Test
-    @Order(2)
+    @Order(7)
     void createRejectsInvalidPayloadWith400AndFieldErrors() throws Exception {
         Map<String, Object> request = Map.of(
                 "amount", -5,
                 "date", "2026-07-01");
 
-        ResponseEntity<String> response = restTemplate.postForEntity(BASE, request, String.class);
+        ResponseEntity<String> response =
+                restTemplate.postForEntity(BASE, authorized(request), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         JsonNode body = objectMapper.readTree(response.getBody());
@@ -82,10 +162,11 @@ class ExpenseApiIntegrationTest {
     }
 
     @Test
-    @Order(3)
+    @Order(8)
     void listReturnsPagedResult() throws Exception {
-        ResponseEntity<String> response =
-                restTemplate.getForEntity(BASE + "?year=2026&month=7&page=0&size=10", String.class);
+        ResponseEntity<String> response = restTemplate.exchange(
+                BASE + "?year=2026&month=7&page=0&size=10",
+                HttpMethod.GET, new HttpEntity<>(authHeaders()), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = objectMapper.readTree(response.getBody());
@@ -95,7 +176,35 @@ class ExpenseApiIntegrationTest {
     }
 
     @Test
-    @Order(4)
+    @Order(9)
+    void otherUsersCannotSeeOrTouchTheExpense() throws Exception {
+        Map<String, Object> register = Map.of(
+                "email", "intruder@example.com",
+                "password", "super-secret-2",
+                "displayName", "Intruder");
+        ResponseEntity<AuthResponse> registered =
+                restTemplate.postForEntity(AUTH + "/register", register, AuthResponse.class);
+        assertThat(registered.getBody()).isNotNull();
+
+        HttpHeaders intruderHeaders = new HttpHeaders();
+        intruderHeaders.setBearerAuth(registered.getBody().token());
+
+        ResponseEntity<String> get = restTemplate.exchange(
+                BASE + "/" + createdId, HttpMethod.GET, new HttpEntity<>(intruderHeaders), String.class);
+        assertThat(get.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        ResponseEntity<String> list = restTemplate.exchange(
+                BASE, HttpMethod.GET, new HttpEntity<>(intruderHeaders), String.class);
+        JsonNode body = objectMapper.readTree(list.getBody());
+        assertThat(body.get("page").get("totalElements").asLong()).isZero();
+
+        ResponseEntity<Void> delete = restTemplate.exchange(
+                BASE + "/" + createdId, HttpMethod.DELETE, new HttpEntity<>(intruderHeaders), Void.class);
+        assertThat(delete.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @Order(10)
     void updateModifiesExpense() {
         Map<String, Object> request = Map.of(
                 "amount", 30.00,
@@ -104,7 +213,7 @@ class ExpenseApiIntegrationTest {
                 "note", "Updated note");
 
         ResponseEntity<ExpenseResponse> response = restTemplate.exchange(
-                BASE + "/" + createdId, HttpMethod.PUT, new HttpEntity<>(request), ExpenseResponse.class);
+                BASE + "/" + createdId, HttpMethod.PUT, authorized(request), ExpenseResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
@@ -113,10 +222,11 @@ class ExpenseApiIntegrationTest {
     }
 
     @Test
-    @Order(5)
+    @Order(11)
     void summaryGroupsTotalsByCategory() throws Exception {
-        ResponseEntity<String> response =
-                restTemplate.getForEntity(BASE + "/summary?year=2026&month=7", String.class);
+        ResponseEntity<String> response = restTemplate.exchange(
+                BASE + "/summary?year=2026&month=7",
+                HttpMethod.GET, new HttpEntity<>(authHeaders()), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = objectMapper.readTree(response.getBody());
@@ -127,14 +237,14 @@ class ExpenseApiIntegrationTest {
     }
 
     @Test
-    @Order(6)
+    @Order(12)
     void deleteReturns204ThenGetReturns404() throws Exception {
         ResponseEntity<Void> deleteResponse = restTemplate.exchange(
-                BASE + "/" + createdId, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
+                BASE + "/" + createdId, HttpMethod.DELETE, new HttpEntity<>(authHeaders()), Void.class);
         assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        ResponseEntity<String> getResponse =
-                restTemplate.getForEntity(BASE + "/" + createdId, String.class);
+        ResponseEntity<String> getResponse = restTemplate.exchange(
+                BASE + "/" + createdId, HttpMethod.GET, new HttpEntity<>(authHeaders()), String.class);
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         JsonNode body = objectMapper.readTree(getResponse.getBody());
         assertThat(body.get("status").asInt()).isEqualTo(404);

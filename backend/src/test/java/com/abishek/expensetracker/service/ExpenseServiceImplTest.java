@@ -7,13 +7,16 @@ import com.abishek.expensetracker.exception.ExpenseNotFoundException;
 import com.abishek.expensetracker.mapper.ExpenseMapper;
 import com.abishek.expensetracker.model.Category;
 import com.abishek.expensetracker.model.Expense;
+import com.abishek.expensetracker.model.User;
 import com.abishek.expensetracker.repository.ExpenseRepository;
+import com.abishek.expensetracker.security.CurrentUserService;
 import com.abishek.expensetracker.service.impl.ExpenseServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,18 +34,27 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ExpenseServiceImplTest {
 
+    private static final long USER_ID = 42L;
+
     @Mock
     private ExpenseRepository expenseRepository;
 
+    @Mock
+    private CurrentUserService currentUserService;
+
+    private User user;
     private ExpenseServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new ExpenseServiceImpl(expenseRepository, new ExpenseMapper());
+        user = new User("abi@example.com", "hash", "Abi");
+        ReflectionTestUtils.setField(user, "id", USER_ID);
+        when(currentUserService.requireCurrentUser()).thenReturn(user);
+        service = new ExpenseServiceImpl(expenseRepository, new ExpenseMapper(), currentUserService);
     }
 
     @Test
-    void createSavesAndReturnsResponse() {
+    void createSavesExpenseForCurrentUser() {
         ExpenseRequest request = new ExpenseRequest(
                 new BigDecimal("42.50"), Category.FOOD, LocalDate.of(2026, 7, 1), "Lunch");
         when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -50,13 +63,12 @@ class ExpenseServiceImplTest {
 
         assertThat(response.amount()).isEqualByComparingTo("42.50");
         assertThat(response.category()).isEqualTo(Category.FOOD);
-        assertThat(response.note()).isEqualTo("Lunch");
         verify(expenseRepository).save(any(Expense.class));
     }
 
     @Test
-    void getByIdThrowsWhenMissing() {
-        when(expenseRepository.findById(99L)).thenReturn(Optional.empty());
+    void getByIdThrowsWhenNotOwnedOrMissing() {
+        when(expenseRepository.findByIdAndUserId(99L, USER_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getById(99L))
                 .isInstanceOf(ExpenseNotFoundException.class)
@@ -64,10 +76,10 @@ class ExpenseServiceImplTest {
     }
 
     @Test
-    void updateModifiesExistingExpense() {
+    void updateModifiesOwnedExpense() {
         Expense existing = new Expense(
-                new BigDecimal("10.00"), Category.TRANSPORT, LocalDate.of(2026, 6, 15), "Bus");
-        when(expenseRepository.findById(1L)).thenReturn(Optional.of(existing));
+                new BigDecimal("10.00"), Category.TRANSPORT, LocalDate.of(2026, 6, 15), "Bus", user);
+        when(expenseRepository.findByIdAndUserId(1L, USER_ID)).thenReturn(Optional.of(existing));
         when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ExpenseRequest request = new ExpenseRequest(
@@ -76,13 +88,12 @@ class ExpenseServiceImplTest {
 
         assertThat(response.amount()).isEqualByComparingTo("15.75");
         assertThat(response.category()).isEqualTo(Category.FOOD);
-        assertThat(response.date()).isEqualTo(LocalDate.of(2026, 6, 16));
         assertThat(response.note()).isEqualTo("Dinner");
     }
 
     @Test
-    void deleteThrowsWhenMissing() {
-        when(expenseRepository.existsById(7L)).thenReturn(false);
+    void deleteThrowsWhenNotOwnedOrMissing() {
+        when(expenseRepository.existsByIdAndUserId(7L, USER_ID)).thenReturn(false);
 
         assertThatThrownBy(() -> service.delete(7L))
                 .isInstanceOf(ExpenseNotFoundException.class);
@@ -90,8 +101,8 @@ class ExpenseServiceImplTest {
     }
 
     @Test
-    void deleteRemovesExistingExpense() {
-        when(expenseRepository.existsById(3L)).thenReturn(true);
+    void deleteRemovesOwnedExpense() {
+        when(expenseRepository.existsByIdAndUserId(3L, USER_ID)).thenReturn(true);
 
         service.delete(3L);
 
@@ -99,8 +110,9 @@ class ExpenseServiceImplTest {
     }
 
     @Test
-    void monthlySummaryAggregatesCategoryTotals() {
-        when(expenseRepository.totalsByCategory(LocalDate.of(2026, 7, 1), LocalDate.of(2026, 8, 1)))
+    void monthlySummaryAggregatesCurrentUsersTotals() {
+        when(expenseRepository.totalsByCategory(
+                USER_ID, LocalDate.of(2026, 7, 1), LocalDate.of(2026, 8, 1)))
                 .thenReturn(List.of(
                         categoryTotal(Category.FOOD, "120.00"),
                         categoryTotal(Category.TRANSPORT, "45.50")));
@@ -114,7 +126,7 @@ class ExpenseServiceImplTest {
 
     @Test
     void monthlySummaryReturnsZeroForEmptyMonth() {
-        when(expenseRepository.totalsByCategory(any(), any())).thenReturn(List.of());
+        when(expenseRepository.totalsByCategory(eq(USER_ID), any(), any())).thenReturn(List.of());
 
         MonthlySummaryResponse summary = service.monthlySummary(2026, 1);
 

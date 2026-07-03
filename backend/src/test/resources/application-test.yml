@@ -3,3 +3,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+app:
+  jwt:
+    secret: test-only-jwt-secret-0123456789abcdef
+

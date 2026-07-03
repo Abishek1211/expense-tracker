@@ -11,3 +11,9 @@ spring:
     console:
       enabled: true
       path: /h2-console
+
+app:
+  jwt:
+    # Dev-only signing key for the in-memory H2 profile — never used in prod,
+    # where JWT_SECRET must be provided via environment variable.
+    secret: ${JWT_SECRET:dev-only-jwt-secret-not-for-production-use}

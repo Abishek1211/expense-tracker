@@ -20,7 +20,7 @@ breakdown chart.
 
 | Layer      | Technology                                                              |
 | ---------- | ----------------------------------------------------------------------- |
-| Backend    | Java 21, Spring Boot 3.5, Spring Data JPA, Flyway, springdoc-openapi    |
+| Backend    | Java 21, Spring Boot 3.5, Spring Data JPA, Spring Security + JWT, Flyway, springdoc-openapi |
 | Frontend   | React 18, Vite, TypeScript, Tailwind CSS 4, TanStack Query, Recharts    |
 | Database   | PostgreSQL (prod), H2 in-memory (dev), Testcontainers (integration tests) |
 | Deployment | Render (backend, Docker) + Vercel (frontend)                            |
@@ -67,7 +67,14 @@ npm run dev
 
 ## API Summary
 
-Base path: `/api/v1/expenses`
+Auth (public): register or log in to get a JWT, then send it as `Authorization: Bearer <token>`.
+
+| Method | Path                    | Description                          | Status          |
+| ------ | ----------------------- | ------------------------------------ | --------------- |
+| POST   | `/api/v1/auth/register` | Create an account, returns a JWT     | 201 / 400 / 409 |
+| POST   | `/api/v1/auth/login`    | Exchange credentials for a JWT       | 200 / 401       |
+
+Expenses (require a Bearer token; every query is scoped to the authenticated user):
 
 | Method | Path                                  | Description                              | Status    |
 | ------ | ------------------------------------- | ---------------------------------------- | --------- |
@@ -95,7 +102,7 @@ Errors follow a consistent shape:
 
 - [Architecture](docs/ARCHITECTURE.md) — layered design, request flow, DTO/mapper rationale
 - [Deployment](docs/DEPLOYMENT.md) — Render + Vercel step-by-step
-- [Security roadmap](SECURITY.md) — how JWT auth slots in later
+- [Security](SECURITY.md) — JWT auth design, limitations, hardening ideas
 
 ## License
 

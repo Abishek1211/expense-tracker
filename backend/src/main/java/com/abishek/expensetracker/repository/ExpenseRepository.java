@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long>, JpaSpecificationExecutor<Expense> {
 
@@ -19,12 +20,17 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long>, JpaSpec
         BigDecimal getTotal();
     }
 
+    Optional<Expense> findByIdAndUserId(Long id, Long userId);
+
+    boolean existsByIdAndUserId(Long id, Long userId);
+
     @Query("""
             select e.category as category, sum(e.amount) as total
             from Expense e
-            where e.date >= :start and e.date < :end
+            where e.user.id = :userId and e.date >= :start and e.date < :end
             group by e.category
             order by sum(e.amount) desc
             """)
-    List<CategoryTotalView> totalsByCategory(@Param("start") LocalDate start, @Param("end") LocalDate end);
+    List<CategoryTotalView> totalsByCategory(
+            @Param("userId") Long userId, @Param("start") LocalDate start, @Param("end") LocalDate end);
 }

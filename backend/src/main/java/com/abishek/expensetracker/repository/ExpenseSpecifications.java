@@ -12,6 +12,10 @@ public final class ExpenseSpecifications {
     private ExpenseSpecifications() {
     }
 
+    public static Specification<Expense> belongsToUser(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
+
     public static Specification<Expense> hasCategory(Category category) {
         return (root, query, cb) -> cb.equal(root.get("category"), category);
     }

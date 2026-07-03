@@ -3,13 +3,14 @@ package com.abishek.expensetracker.mapper;
 import com.abishek.expensetracker.dto.ExpenseRequest;
 import com.abishek.expensetracker.dto.ExpenseResponse;
 import com.abishek.expensetracker.model.Expense;
+import com.abishek.expensetracker.model.User;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ExpenseMapper {
 
-    public Expense toEntity(ExpenseRequest request) {
-        return new Expense(request.amount(), request.category(), request.date(), request.note());
+    public Expense toEntity(ExpenseRequest request, User owner) {
+        return new Expense(request.amount(), request.category(), request.date(), request.note(), owner);
     }
 
     public void updateEntity(Expense expense, ExpenseRequest request) {

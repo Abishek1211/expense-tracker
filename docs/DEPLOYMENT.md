@@ -31,6 +31,7 @@ its URL.
    | `DB_USER`                | database username                                            |
    | `DB_PASSWORD`            | database password                                            |
    | `FRONTEND_ORIGIN`        | your Vercel URL, e.g. `https://expense-tracker-abc.vercel.app` (set a placeholder now, update after step 2) |
+   | `JWT_SECRET`             | random string, min 32 chars — generate with `openssl rand -base64 48` (never reuse the dev default) |
 
    Render also injects `PORT` automatically; the Dockerfile honors it.
 4. Deploy. First build takes a few minutes (Gradle build inside Docker). Verify:
