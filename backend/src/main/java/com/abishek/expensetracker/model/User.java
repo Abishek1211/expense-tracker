@@ -21,11 +21,14 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 100)
+    @Column(name = "password_hash", length = 100)
     private String passwordHash;
 
     @Column(name = "display_name", nullable = false, length = 100)
     private String displayName;
+
+    @Column(name = "auth_provider", nullable = false, length = 20)
+    private String authProvider = "LOCAL";
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -38,6 +41,12 @@ public class User {
         this.email = email;
         this.passwordHash = passwordHash;
         this.displayName = displayName;
+    }
+
+    public static User googleUser(String email, String displayName) {
+        User user = new User(email, null, displayName);
+        user.authProvider = "GOOGLE";
+        return user;
     }
 
     @PrePersist
@@ -61,6 +70,10 @@ public class User {
 
     public String getDisplayName() {
         return displayName;
+    }
+
+    public String getAuthProvider() {
+        return authProvider;
     }
 
     public Instant getCreatedAt() {

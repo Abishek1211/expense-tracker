@@ -119,3 +119,18 @@ export const WalletIcon = (props: IconProps) => (
     <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
   </svg>
 );
+
+export const TagIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
+  </svg>
+);
+
+export const LayersIcon = (props: IconProps) => (
+  <svg {...base(props)}>
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </svg>
+);

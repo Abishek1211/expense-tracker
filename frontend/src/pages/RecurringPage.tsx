@@ -137,7 +137,7 @@ export default function RecurringPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+        className="glass rounded-2xl p-4"
       >
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
@@ -240,7 +240,7 @@ export default function RecurringPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.25 }}
-                className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 ${
+                className={`glass flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 transition-shadow hover:shadow-md ${
                   item.active ? '' : 'opacity-60'
                 }`}
               >

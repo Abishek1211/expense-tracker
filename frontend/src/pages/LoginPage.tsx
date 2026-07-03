@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { login } from '../api/auth';
+import { login, loginWithGoogle } from '../api/auth';
 import { extractApiError } from '../api/client';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 import { WalletIcon } from '../components/Icons';
 import { useAuth } from '../hooks/useAuth';
 
@@ -50,6 +51,17 @@ export default function LoginPage() {
     setDemoLoading(true);
     await signIn({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
     setDemoLoading(false);
+  };
+
+  const handleGoogleCredential = async (idToken: string) => {
+    setError(null);
+    try {
+      const response = await loginWithGoogle(idToken);
+      auth.login(response);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(extractApiError(err)?.message ?? 'Google sign-in failed. Is the backend running?');
+    }
   };
 
   return (
@@ -125,6 +137,11 @@ export default function LoginPage() {
             </span>
             <span className="absolute inset-x-0 top-1/2 h-px bg-gray-200 dark:bg-gray-800" />
           </div>
+
+          <GoogleSignInButton
+            onCredential={handleGoogleCredential}
+            onError={(message) => setError(message)}
+          />
 
           <button
             type="button"

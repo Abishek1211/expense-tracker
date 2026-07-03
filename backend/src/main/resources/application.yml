@@ -16,6 +16,10 @@ app:
     # Must be at least 32 characters; REQUIRED in prod (no default there).
     secret: ${JWT_SECRET:}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:1440}
+  google:
+    # OAuth 2.0 web client ID from Google Cloud Console; Google sign-in is
+    # disabled when unset.
+    client-id: ${GOOGLE_CLIENT_ID:}
 
 management:
   endpoints:
