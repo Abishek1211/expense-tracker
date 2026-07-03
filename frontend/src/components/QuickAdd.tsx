@@ -31,7 +31,7 @@ export default function QuickAdd() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+      className="glass rounded-2xl p-4 transition focus-within:ring-2 focus-within:ring-indigo-500/40"
     >
       <div className="flex items-center gap-3">
         <span className="text-indigo-500 dark:text-indigo-400">
