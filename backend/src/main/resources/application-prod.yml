@@ -1,0 +1,11 @@
+# All values come from environment variables — never hardcode credentials.
+# DATABASE_URL must be a JDBC URL, e.g. jdbc:postgresql://host:5432/dbname
+# If the URL does not embed credentials, set DB_USER and DB_PASSWORD too.
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DB_USER:}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate

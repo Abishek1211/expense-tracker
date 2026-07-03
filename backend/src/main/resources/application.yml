@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: expense-tracker
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

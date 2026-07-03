@@ -1,0 +1,5 @@
+# Datasource comes from Testcontainers via @ServiceConnection.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate

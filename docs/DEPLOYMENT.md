@@ -1,0 +1,72 @@
+# Deployment Guide
+
+The backend runs as a Docker container on **Render**; the frontend is a static Vite build
+on **Vercel** (Vercel cannot run JVM apps). Deploy the backend first — the frontend needs
+its URL.
+
+## 1. Backend on Render
+
+### Create the database
+
+1. In the [Render dashboard](https://dashboard.render.com), click **New → PostgreSQL**.
+2. Pick a name (e.g. `expense-tracker-db`), the free plan, and the region closest to you.
+3. After it provisions, note the **Internal Database URL** components (host, port, database,
+   username, password) from the database's *Info* page.
+
+### Create the web service
+
+1. **New → Web Service**, connect your GitHub account, and select the
+   `expense-tracker` repository.
+2. Settings:
+   - **Root Directory:** `backend`
+   - **Runtime:** `Docker` (Render auto-detects `backend/Dockerfile`)
+   - **Instance type:** Free
+   - **Health Check Path:** `/actuator/health`
+3. Environment variables:
+
+   | Key                      | Value                                                        |
+   | ------------------------ | ------------------------------------------------------------ |
+   | `SPRING_PROFILES_ACTIVE` | `prod`                                                       |
+   | `DATABASE_URL`           | `jdbc:postgresql://<host>:5432/<database>` (from the DB page — note the **`jdbc:`** prefix; don't paste Render's `postgresql://…` URL as-is) |
+   | `DB_USER`                | database username                                            |
+   | `DB_PASSWORD`            | database password                                            |
+   | `FRONTEND_ORIGIN`        | your Vercel URL, e.g. `https://expense-tracker-abc.vercel.app` (set a placeholder now, update after step 2) |
+
+   Render also injects `PORT` automatically; the Dockerfile honors it.
+4. Deploy. First build takes a few minutes (Gradle build inside Docker). Verify:
+   - `https://<your-service>.onrender.com/actuator/health` → `{"status":"UP"}`
+   - `https://<your-service>.onrender.com/swagger-ui.html` → interactive API docs
+
+> **Free-tier cold starts:** Render free services spin down after ~15 minutes of
+> inactivity. The first request afterwards can take 30–60 seconds while the container
+> restarts. That's normal — mention it in your portfolio README, or keep the service warm
+> with an external uptime pinger if it bothers you.
+
+## 2. Frontend on Vercel
+
+1. In [Vercel](https://vercel.com/new), **Import** the `expense-tracker` repository.
+2. Settings:
+   - **Root Directory:** `frontend`
+   - **Framework Preset:** Vite (auto-detected; build `npm run build`, output `dist`)
+3. Environment variable:
+
+   | Key                 | Value                                            |
+   | ------------------- | ------------------------------------------------ |
+   | `VITE_API_BASE_URL` | `https://<your-service>.onrender.com` (no trailing slash) |
+
+4. Deploy. `vercel.json` already contains the SPA rewrite so deep links like `/expenses`
+   don't 404.
+
+## 3. Connect the two
+
+1. Copy the final Vercel URL and set it as `FRONTEND_ORIGIN` on the Render service
+   (Environment tab), then let Render redeploy — otherwise browsers will hit CORS errors.
+2. Open the Vercel URL, add an expense, and check the dashboard chart updates.
+
+## Local production-like run (optional)
+
+```bash
+cd backend
+docker build -t expense-tracker-api .
+docker run -p 8080:8080 --env-file .env expense-tracker-api   # copy .env.example → .env first
+```
