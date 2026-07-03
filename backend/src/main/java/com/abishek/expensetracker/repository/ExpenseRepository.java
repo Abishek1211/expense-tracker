@@ -20,9 +20,30 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long>, JpaSpec
         BigDecimal getTotal();
     }
 
+    interface MonthTotalView {
+        Integer getExpenseYear();
+
+        Integer getExpenseMonth();
+
+        BigDecimal getTotal();
+    }
+
     Optional<Expense> findByIdAndUserId(Long id, Long userId);
 
     boolean existsByIdAndUserId(Long id, Long userId);
+
+    long countByUserIdAndDateGreaterThanEqualAndDateLessThan(Long userId, LocalDate start, LocalDate end);
+
+    long deleteByUserId(Long userId);
+
+    @Query("""
+            select year(e.date) as expenseYear, month(e.date) as expenseMonth, sum(e.amount) as total
+            from Expense e
+            where e.user.id = :userId and e.date >= :start and e.date < :end
+            group by year(e.date), month(e.date)
+            """)
+    List<MonthTotalView> totalsByMonth(
+            @Param("userId") Long userId, @Param("start") LocalDate start, @Param("end") LocalDate end);
 
     @Query("""
             select e.category as category, sum(e.amount) as total

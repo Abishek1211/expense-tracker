@@ -134,6 +134,81 @@ class ExpenseServiceImplTest {
         assertThat(summary.byCategory()).isEmpty();
     }
 
+    @Test
+    void trendFillsMissingMonthsWithZero() {
+        when(expenseRepository.totalsByMonth(eq(USER_ID), any(), any()))
+                .thenReturn(List.of(monthTotal(java.time.YearMonth.now(), "500.00")));
+
+        var trend = service.trend(3);
+
+        assertThat(trend).hasSize(3);
+        assertThat(trend.getFirst().total()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(trend.getLast().total()).isEqualByComparingTo("500.00");
+        assertThat(trend.getLast().month()).isEqualTo(java.time.YearMonth.now().getMonthValue());
+    }
+
+    @Test
+    void insightsReportNoDataForEmptyMonth() {
+        when(expenseRepository.totalsByCategory(eq(USER_ID), any(), any())).thenReturn(List.of());
+
+        var insights = service.insights(2026, 5);
+
+        assertThat(insights).hasSize(1);
+        assertThat(insights.getFirst().type()).isEqualTo("NO_DATA");
+    }
+
+    @Test
+    void insightsComparePreviousMonth() {
+        when(expenseRepository.totalsByCategory(USER_ID, LocalDate.of(2026, 5, 1), LocalDate.of(2026, 6, 1)))
+                .thenReturn(List.of(categoryTotal(Category.FOOD, "1200.00")));
+        when(expenseRepository.totalsByCategory(USER_ID, LocalDate.of(2026, 4, 1), LocalDate.of(2026, 5, 1)))
+                .thenReturn(List.of(categoryTotal(Category.FOOD, "1000.00")));
+        when(expenseRepository.countByUserIdAndDateGreaterThanEqualAndDateLessThan(eq(USER_ID), any(), any()))
+                .thenReturn(8L);
+
+        var insights = service.insights(2026, 5);
+
+        assertThat(insights).extracting("type")
+                .contains("TOTAL_CHANGE", "TOP_CATEGORY", "BIGGEST_INCREASE", "DAILY_AVERAGE");
+        var totalChange = insights.stream().filter(i -> i.type().equals("TOTAL_CHANGE")).findFirst().orElseThrow();
+        assertThat(totalChange.changePercent()).isEqualTo(20.0);
+        assertThat(totalChange.message()).contains("20% more");
+    }
+
+    @Test
+    void exportCsvEscapesSpecialCharacters() {
+        Expense expense = new Expense(
+                new BigDecimal("99.99"), Category.FOOD, LocalDate.of(2026, 7, 1), "Lunch, \"fancy\" place", user);
+        when(expenseRepository.findAll(
+                org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Expense>>any(),
+                any(org.springframework.data.domain.Sort.class)))
+                .thenReturn(List.of(expense));
+
+        String csv = service.exportCsv(new ExpenseService.ExpenseFilters(null, null, null, null, null, null));
+
+        assertThat(csv).startsWith("id,date,category,amount,note,createdAt");
+        assertThat(csv).contains("\"Lunch, \"\"fancy\"\" place\"");
+    }
+
+    private ExpenseRepository.MonthTotalView monthTotal(java.time.YearMonth ym, String total) {
+        return new ExpenseRepository.MonthTotalView() {
+            @Override
+            public Integer getExpenseYear() {
+                return ym.getYear();
+            }
+
+            @Override
+            public Integer getExpenseMonth() {
+                return ym.getMonthValue();
+            }
+
+            @Override
+            public BigDecimal getTotal() {
+                return new BigDecimal(total);
+            }
+        };
+    }
+
     private ExpenseRepository.CategoryTotalView categoryTotal(Category category, String total) {
         return new ExpenseRepository.CategoryTotalView() {
             @Override

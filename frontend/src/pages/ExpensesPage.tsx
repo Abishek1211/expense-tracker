@@ -1,32 +1,73 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { downloadCsv } from '../api/expenses';
 import ErrorMessage from '../components/ErrorMessage';
 import ExpenseFormModal from '../components/ExpenseFormModal';
 import ExpenseTable from '../components/ExpenseTable';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { DownloadIcon, PlusIcon, SearchIcon } from '../components/Icons';
 import MonthPicker from '../components/MonthPicker';
+import { SkeletonTable } from '../components/Skeletons';
 import { useExpenses } from '../hooks/useExpenses';
 import { titleCase } from '../lib/format';
 import { CATEGORIES, type Category, type Expense } from '../types/expense';
 
 const PAGE_SIZE = 20;
 
+function isCategory(value: string | null): value is Category {
+  return CATEGORIES.includes(value as Category);
+}
+
 export default function ExpensesPage() {
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [category, setCategory] = useState<Category | ''>('');
-  const [page, setPage] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const year = Number(searchParams.get('year')) || now.getFullYear();
+  const month = Number(searchParams.get('month')) || now.getMonth() + 1;
+  const categoryParam = searchParams.get('category');
+  const category: Category | '' = isCategory(categoryParam) ? categoryParam : '';
+
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
-  const { data, isPending, isError, error, refetch } = useExpenses({
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(handle);
+  }, [search]);
+
+  const filters = {
     year,
     month,
     category: category === '' ? undefined : category,
+    q: debouncedSearch || undefined,
     page,
     size: PAGE_SIZE,
-  });
+  };
+
+  const { data, isPending, isError, error, refetch } = useExpenses(filters);
+
+  const updateParams = (updates: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === null) next.delete(key);
+      else next.set(key, value);
+    }
+    setSearchParams(next, { replace: true });
+    setPage(0);
+  };
+
+  const handleExport = async () => {
+    try {
+      await downloadCsv({ ...filters, page: undefined, size: undefined });
+      toast.success('CSV downloaded');
+    } catch {
+      toast.error('Export failed');
+    }
+  };
 
   const openCreate = () => {
     setEditingExpense(null);
@@ -41,36 +82,54 @@ export default function ExpensesPage() {
   const totalPages = data?.page.totalPages ?? 0;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-6"
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold tracking-tight">Expenses</h2>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
-        >
-          + Add expense
-        </button>
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Expenses</h2>
+          <p className="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
+            {data ? `${data.page.totalElements} record${data.page.totalElements === 1 ? '' : 's'}` : ' '}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <DownloadIcon width={15} height={15} />
+            CSV
+          </button>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
+          >
+            <PlusIcon width={15} height={15} />
+            Add expense
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <MonthPicker
           year={year}
           month={month}
-          onChange={(nextYear, nextMonth) => {
-            setYear(nextYear);
-            setMonth(nextMonth);
-            setPage(0);
-          }}
+          onChange={(nextYear, nextMonth) =>
+            updateParams({ year: String(nextYear), month: String(nextMonth) })
+          }
         />
         <select
           value={category}
-          onChange={(event) => {
-            setCategory(event.target.value as Category | '');
-            setPage(0);
-          }}
+          onChange={(event) =>
+            updateParams({ category: event.target.value === '' ? null : event.target.value })
+          }
           aria-label="Filter by category"
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none"
+          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900"
         >
           <option value="">All categories</option>
           {CATEGORIES.map((option) => (
@@ -79,9 +138,24 @@ export default function ExpensesPage() {
             </option>
           ))}
         </select>
+        <div className="relative min-w-48 flex-1 sm:max-w-xs">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <SearchIcon width={15} height={15} />
+          </span>
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(0);
+            }}
+            placeholder="Search notes…"
+            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900"
+          />
+        </div>
       </div>
 
-      {isPending && <LoadingSpinner label="Loading expenses…" />}
+      {isPending && <SkeletonTable />}
       {isError && <ErrorMessage error={error} onRetry={() => refetch()} />}
 
       {data && (
@@ -89,12 +163,12 @@ export default function ExpensesPage() {
           <ExpenseTable expenses={data.content} onEdit={openEdit} />
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
               <button
                 type="button"
                 disabled={page === 0}
                 onClick={() => setPage((prev) => prev - 1)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium transition hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
               >
                 Previous
               </button>
@@ -105,7 +179,7 @@ export default function ExpensesPage() {
                 type="button"
                 disabled={page + 1 >= totalPages}
                 onClick={() => setPage((prev) => prev + 1)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium transition hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
               >
                 Next
               </button>
@@ -119,6 +193,6 @@ export default function ExpensesPage() {
         expense={editingExpense}
         onClose={() => setModalOpen(false)}
       />
-    </div>
+    </motion.div>
   );
 }

@@ -250,4 +250,69 @@ class ExpenseApiIntegrationTest {
         assertThat(body.get("status").asInt()).isEqualTo(404);
         assertThat(body.get("error").asText()).isEqualTo("Not Found");
     }
+
+    @Test
+    @Order(13)
+    void budgetsCanBeUpsertedListedAndDeleted() throws Exception {
+        ResponseEntity<String> upsert = restTemplate.exchange(
+                "/api/v1/budgets/FOOD", HttpMethod.PUT,
+                authorized(Map.of("amount", 8000)), String.class);
+        assertThat(upsert.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<String> list = restTemplate.exchange(
+                "/api/v1/budgets", HttpMethod.GET, new HttpEntity<>(authHeaders()), String.class);
+        JsonNode budgets = objectMapper.readTree(list.getBody());
+        assertThat(budgets.isArray()).isTrue();
+        assertThat(budgets.size()).isEqualTo(1);
+        assertThat(budgets.get(0).get("category").asText()).isEqualTo("FOOD");
+
+        ResponseEntity<Void> delete = restTemplate.exchange(
+                "/api/v1/budgets/FOOD", HttpMethod.DELETE, new HttpEntity<>(authHeaders()), Void.class);
+        assertThat(delete.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @Order(14)
+    void trendReturnsRequestedNumberOfMonths() throws Exception {
+        ResponseEntity<String> response = restTemplate.exchange(
+                BASE + "/trend?months=6", HttpMethod.GET, new HttpEntity<>(authHeaders()), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.isArray()).isTrue();
+        assertThat(body.size()).isEqualTo(6);
+    }
+
+    @Test
+    @Order(15)
+    void exportReturnsCsvAttachment() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                BASE + "/export", HttpMethod.GET, new HttpEntity<>(authHeaders()), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).hasToString("text/csv");
+        assertThat(response.getBody()).startsWith("id,date,category,amount,note,createdAt");
+    }
+
+    @Test
+    @Order(16)
+    void recurringExpenseCanBeCreatedAndListed() throws Exception {
+        Map<String, Object> request = Map.of(
+                "amount", 649,
+                "category", "ENTERTAINMENT",
+                "note", "Streaming subscription",
+                "dayOfMonth", 5);
+
+        ResponseEntity<String> create =
+                restTemplate.postForEntity("/api/v1/recurring", authorized(request), String.class);
+        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        JsonNode created = objectMapper.readTree(create.getBody());
+        assertThat(created.get("nextRun").asText()).isNotBlank();
+        assertThat(created.get("active").asBoolean()).isTrue();
+
+        ResponseEntity<String> list = restTemplate.exchange(
+                "/api/v1/recurring", HttpMethod.GET, new HttpEntity<>(authHeaders()), String.class);
+        JsonNode items = objectMapper.readTree(list.getBody());
+        assertThat(items.size()).isEqualTo(1);
+    }
 }

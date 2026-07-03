@@ -34,8 +34,11 @@ Implementation notes:
   rendering by default, but a stricter approach is httpOnly refresh-token cookies with
   short-lived access tokens.
 - **No refresh tokens** — users re-login when the JWT expires (24h default).
-- **No rate limiting** on login/register; add a filter or an upstream limiter (e.g.
-  Cloudflare) before exposing this beyond a portfolio context.
+- **Rate limiting** on `/api/v1/auth/**` is a simple in-memory sliding window
+  (20 requests/minute per IP, `AuthRateLimitFilter`). It is per-instance and resets on
+  restart — use a gateway or Redis-backed limiter for anything serious.
+- **Demo account** (`demo@expensetracker.app`) has publicly known credentials by design;
+  its data is regenerated on every startup. Set `DEMO_ENABLED=false` to disable seeding.
 - **No email verification or password reset** — out of scope for v2.
 - Swagger UI is intentionally public for demo purposes; lock it down (or disable it in
   prod) for a real product.

@@ -63,6 +63,9 @@ export interface ExpenseFilters {
   year?: number;
   month?: number;
   category?: Category;
+  q?: string;
+  from?: string;
+  to?: string;
   page?: number;
   size?: number;
 }

@@ -28,4 +28,17 @@ public final class ExpenseSpecifications {
                 cb.lessThan(root.get("date"), end)
         );
     }
+
+    public static Specification<Expense> noteContains(String text) {
+        String pattern = "%" + text.trim().toLowerCase() + "%";
+        return (root, query, cb) -> cb.like(cb.lower(root.get("note")), pattern);
+    }
+
+    public static Specification<Expense> onOrAfter(LocalDate date) {
+        return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("date"), date);
+    }
+
+    public static Specification<Expense> onOrBefore(LocalDate date) {
+        return (root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), date);
+    }
 }

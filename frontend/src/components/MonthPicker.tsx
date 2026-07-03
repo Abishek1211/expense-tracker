@@ -13,12 +13,12 @@ export default function MonthPicker({ year, month, onChange }: MonthPickerProps)
   };
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+    <div className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <button
         type="button"
         onClick={() => shift(-1)}
         aria-label="Previous month"
-        className="rounded-md px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+        className="rounded-md px-2.5 py-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
       >
         ←
       </button>
@@ -27,7 +27,7 @@ export default function MonthPicker({ year, month, onChange }: MonthPickerProps)
         type="button"
         onClick={() => shift(1)}
         aria-label="Next month"
-        className="rounded-md px-2.5 py-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+        className="rounded-md px-2.5 py-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
       >
         →
       </button>

@@ -1,8 +1,16 @@
 import { useState, type FormEvent } from 'react';
+import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
 import { extractApiError } from '../api/client';
+import { WalletIcon } from '../components/Icons';
 import { useAuth } from '../hooks/useAuth';
+
+const DEMO_EMAIL = 'demo@expensetracker.app';
+const DEMO_PASSWORD = 'demo-password-123';
+
+const inputClass =
+  'w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:focus:ring-indigo-900';
 
 export default function LoginPage() {
   const auth = useAuth();
@@ -14,44 +22,61 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const signIn = async (credentials: { email: string; password: string }) => {
+    setError(null);
+    try {
+      const response = await login(credentials);
+      auth.login(response);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(extractApiError(err)?.message ?? 'Login failed. Is the backend running?');
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    setError(null);
     if (!email.trim() || !password) {
       setError('Email and password are required');
       return;
     }
     setSubmitting(true);
-    try {
-      const response = await login({ email: email.trim(), password });
-      auth.login(response);
-      navigate(from, { replace: true });
-    } catch (err) {
-      setError(extractApiError(err)?.message ?? 'Login failed. Is the backend running?');
-    } finally {
-      setSubmitting(false);
-    }
+    await signIn({ email: email.trim(), password });
+    setSubmitting(false);
+  };
+
+  const handleDemo = async () => {
+    setDemoLoading(true);
+    await signIn({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
+    setDemoLoading(false);
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-sm"
+      >
         <div className="mb-6 text-center">
-          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-2xl text-white">
-            ₹
+          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-600/25">
+            <WalletIcon width={22} height={22} />
           </span>
           <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-          <p className="mt-1 text-sm text-gray-500">Sign in to your expense tracker</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Sign in to your expense tracker
+          </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+          className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900"
           noValidate
         >
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Email
             </label>
             <input
@@ -60,13 +85,13 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className={inputClass}
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Password
             </label>
             <input
@@ -75,29 +100,49 @@ export default function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className={inputClass}
               placeholder="••••••••"
             />
           </div>
 
-          {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {error && (
+            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"
-            disabled={submitting}
-            className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+            disabled={submitting || demoLoading}
+            className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-60"
           >
             {submitting ? 'Signing in…' : 'Sign in'}
           </button>
 
-          <p className="text-center text-sm text-gray-500">
+          <div className="relative text-center">
+            <span className="relative z-10 bg-white px-2 text-xs text-gray-400 dark:bg-gray-900 dark:text-gray-500">
+              or
+            </span>
+            <span className="absolute inset-x-0 top-1/2 h-px bg-gray-200 dark:bg-gray-800" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDemo}
+            disabled={submitting || demoLoading}
+            className="w-full rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-950"
+          >
+            {demoLoading ? 'Loading demo…' : 'Try the demo — no signup needed'}
+          </button>
+
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
             No account?{' '}
-            <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-800">
+            <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">
               Create one
             </Link>
           </p>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

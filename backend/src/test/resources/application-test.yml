@@ -5,6 +5,8 @@ spring:
       ddl-auto: validate
 
 app:
+  demo:
+    enabled: false
   jwt:
     secret: test-only-jwt-secret-0123456789abcdef
 

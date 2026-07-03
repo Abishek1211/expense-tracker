@@ -2,9 +2,12 @@ package com.abishek.expensetracker.controller;
 
 import com.abishek.expensetracker.dto.ExpenseRequest;
 import com.abishek.expensetracker.dto.ExpenseResponse;
+import com.abishek.expensetracker.dto.InsightResponse;
+import com.abishek.expensetracker.dto.MonthTotal;
 import com.abishek.expensetracker.dto.MonthlySummaryResponse;
 import com.abishek.expensetracker.model.Category;
 import com.abishek.expensetracker.service.ExpenseService;
+import com.abishek.expensetracker.service.ExpenseService.ExpenseFilters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -12,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,10 +31,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/expenses")
-@Tag(name = "Expenses", description = "CRUD operations and monthly summaries for expenses")
+@Tag(name = "Expenses", description = "CRUD operations, summaries, trends, and insights for expenses")
 public class ExpenseController {
 
     private final ExpenseService expenseService;
@@ -38,13 +46,16 @@ public class ExpenseController {
     }
 
     @GetMapping
-    @Operation(summary = "List expenses with optional month and category filters")
+    @Operation(summary = "List expenses with optional month, category, text, and date-range filters")
     public Page<ExpenseResponse> list(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Category category,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
-        return expenseService.list(year, month, category, pageable);
+        return expenseService.list(new ExpenseFilters(year, month, category, q, from, to), pageable);
     }
 
     @GetMapping("/{id}")
@@ -81,5 +92,33 @@ public class ExpenseController {
     @Operation(summary = "Monthly totals grouped by category")
     public MonthlySummaryResponse summary(@RequestParam int year, @RequestParam int month) {
         return expenseService.monthlySummary(year, month);
+    }
+
+    @GetMapping("/trend")
+    @Operation(summary = "Monthly spending totals for the last N months (default 6)")
+    public List<MonthTotal> trend(@RequestParam(defaultValue = "6") int months) {
+        return expenseService.trend(months);
+    }
+
+    @GetMapping("/insights")
+    @Operation(summary = "Human-readable spending insights for a month vs the previous one")
+    public List<InsightResponse> insights(@RequestParam int year, @RequestParam int month) {
+        return expenseService.insights(year, month);
+    }
+
+    @GetMapping(value = "/export", produces = "text/csv")
+    @Operation(summary = "Export the filtered expenses as CSV")
+    public ResponseEntity<String> export(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Category category,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        String csv = expenseService.exportCsv(new ExpenseFilters(year, month, category, q, from, to));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"expenses.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(csv);
     }
 }

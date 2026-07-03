@@ -8,9 +8,12 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![CI](https://github.com/Abishek1211/expense-tracker/actions/workflows/backend-ci.yml/badge.svg)
 
-A full-stack expense tracking application with a Spring Boot REST API and a React dashboard —
-create, edit, and delete expenses, then explore monthly spending summaries with a category
-breakdown chart.
+A full-stack expense tracking application with a Spring Boot REST API and a React dashboard.
+
+**Features:** JWT auth with per-user data · natural-language quick add ("coffee 150 yesterday") ·
+monthly summaries, 6-month trend chart, and spending insights · category budgets with progress
+bars · recurring expenses (auto-created monthly) · search, filters, and CSV export · dark mode ·
+optimistic UI with undo · a one-click **demo account** so you can try it without registering.
 
 > 📷 _Screenshot placeholder — add a screenshot of the dashboard here._
 
@@ -84,6 +87,13 @@ Expenses (require a Bearer token; every query is scoped to the authenticated use
 | PUT    | `/api/v1/expenses/{id}`               | Update an expense                        | 200 / 400 / 404 |
 | DELETE | `/api/v1/expenses/{id}`               | Delete an expense                        | 204 / 404 |
 | GET    | `/api/v1/expenses/summary?year=&month=` | Monthly totals grouped by category     | 200       |
+| GET    | `/api/v1/expenses/trend?months=6`     | Monthly totals for the last N months     | 200       |
+| GET    | `/api/v1/expenses/insights?year=&month=` | Spending insights vs the previous month | 200     |
+| GET    | `/api/v1/expenses/export`             | CSV download of the filtered expenses    | 200       |
+| GET/PUT/DELETE | `/api/v1/budgets[/{category}]` | Category budget limits                   | 200 / 204 |
+| GET/POST/PUT/DELETE | `/api/v1/recurring[/{id}]` | Recurring expense definitions             | 200 / 201 / 204 |
+
+The list endpoint also accepts `q` (note search), `from`, and `to` (ISO dates).
 
 Errors follow a consistent shape:
 

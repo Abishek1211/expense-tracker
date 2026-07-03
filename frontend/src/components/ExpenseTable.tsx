@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useDeleteExpense } from '../hooks/useExpenses';
+import { AnimatePresence, motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { useCreateExpense, useDeleteExpense } from '../hooks/useExpenses';
 import { CATEGORY_BADGE_CLASSES } from '../lib/categories';
 import { formatCurrency, formatDate, titleCase } from '../lib/format';
 import type { Expense } from '../types/expense';
@@ -11,24 +12,43 @@ interface ExpenseTableProps {
 
 export default function ExpenseTable({ expenses, onEdit }: ExpenseTableProps) {
   const deleteMutation = useDeleteExpense();
-  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const createMutation = useCreateExpense();
 
-  const handleDelete = (id: number) => {
-    deleteMutation.mutate(id, { onSettled: () => setConfirmingId(null) });
+  const handleDelete = (expense: Expense) => {
+    deleteMutation.mutate(expense.id, {
+      onSuccess: () => {
+        toast.success('Expense deleted', {
+          action: {
+            label: 'Undo',
+            onClick: () =>
+              createMutation.mutate({
+                amount: expense.amount,
+                category: expense.category,
+                date: expense.date,
+                note: expense.note,
+              }),
+          },
+        });
+      },
+      onError: () => toast.error('Could not delete the expense'),
+    });
   };
 
   if (expenses.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-300 py-16 text-center text-sm text-gray-400">
-        No expenses found for this period. Add your first one!
+      <div className="rounded-xl border border-dashed border-gray-300 py-16 text-center dark:border-gray-700">
+        <p className="text-sm text-gray-400 dark:text-gray-500">No expenses found for this period.</p>
+        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          Add one with the button above, or adjust the filters.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+        <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
           <tr>
             <th className="px-4 py-3">Date</th>
             <th className="px-4 py-3">Category</th>
@@ -37,64 +57,54 @@ export default function ExpenseTable({ expenses, onEdit }: ExpenseTableProps) {
             <th className="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
-          {expenses.map((expense) => (
-            <tr key={expense.id} className="hover:bg-gray-50">
-              <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                {formatDate(expense.date)}
-              </td>
-              <td className="px-4 py-3">
-                <span
-                  className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${CATEGORY_BADGE_CLASSES[expense.category]}`}
-                >
-                  {titleCase(expense.category)}
-                </span>
-              </td>
-              <td className="max-w-xs truncate px-4 py-3 text-gray-500">{expense.note ?? '—'}</td>
-              <td className="whitespace-nowrap px-4 py-3 text-right font-medium">
-                {formatCurrency(expense.amount)}
-              </td>
-              <td className="whitespace-nowrap px-4 py-3 text-right">
-                {confirmingId === expense.id ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Delete?</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(expense.id)}
-                      disabled={deleteMutation.isPending}
-                      className="text-xs font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
-                    >
-                      Yes
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingId(null)}
-                      className="text-xs font-medium text-gray-500 hover:text-gray-700"
-                    >
-                      No
-                    </button>
+        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          <AnimatePresence initial={false}>
+            {expenses.map((expense) => (
+              <motion.tr
+                key={expense.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -24 }}
+                transition={{ duration: 0.25 }}
+                className="group hover:bg-gray-50 dark:hover:bg-gray-800/60"
+              >
+                <td className="whitespace-nowrap px-4 py-3 text-gray-600 dark:text-gray-400">
+                  {formatDate(expense.date)}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${CATEGORY_BADGE_CLASSES[expense.category]}`}
+                  >
+                    {titleCase(expense.category)}
                   </span>
-                ) : (
-                  <span className="inline-flex gap-3">
+                </td>
+                <td className="max-w-xs truncate px-4 py-3 text-gray-500 dark:text-gray-400">
+                  {expense.note ?? '—'}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
+                  {formatCurrency(expense.amount)}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-right">
+                  <span className="inline-flex gap-3 opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100">
                     <button
                       type="button"
                       onClick={() => onEdit(expense)}
-                      className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                      className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
                     >
                       Edit
                     </button>
                     <button
                       type="button"
-                      onClick={() => setConfirmingId(expense.id)}
-                      className="text-xs font-medium text-red-600 hover:text-red-800"
+                      onClick={() => handleDelete(expense)}
+                      className="text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                     >
                       Delete
                     </button>
                   </span>
-                )}
-              </td>
-            </tr>
-          ))}
+                </td>
+              </motion.tr>
+            ))}
+          </AnimatePresence>
         </tbody>
       </table>
     </div>

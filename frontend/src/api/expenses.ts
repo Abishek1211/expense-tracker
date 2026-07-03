@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import type { Insight, MonthTotal } from '../types/budget';
 import type {
   Expense,
   ExpenseFilters,
@@ -40,4 +41,29 @@ export async function getMonthlySummary(year: number, month: number): Promise<Mo
     params: { year, month },
   });
   return data;
+}
+
+export async function getTrend(months = 6): Promise<MonthTotal[]> {
+  const { data } = await apiClient.get<MonthTotal[]>(`${BASE}/trend`, { params: { months } });
+  return data;
+}
+
+export async function getInsights(year: number, month: number): Promise<Insight[]> {
+  const { data } = await apiClient.get<Insight[]>(`${BASE}/insights`, {
+    params: { year, month },
+  });
+  return data;
+}
+
+export async function downloadCsv(filters: ExpenseFilters): Promise<void> {
+  const { data } = await apiClient.get<Blob>(`${BASE}/export`, {
+    params: filters,
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'expenses.csv';
+  link.click();
+  URL.revokeObjectURL(url);
 }

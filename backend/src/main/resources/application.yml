@@ -7,6 +7,9 @@ spring:
     open-in-view: false
 
 app:
+  demo:
+    # Seeds a demo account (demo@expensetracker.app) with sample data on startup.
+    enabled: ${DEMO_ENABLED:true}
   cors:
     allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
   jwt:
