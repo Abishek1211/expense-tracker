@@ -11,6 +11,8 @@ import com.abishek.expensetracker.service.ExpenseService.ExpenseFilters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -39,6 +41,8 @@ import java.util.List;
 @Tag(name = "Expenses", description = "CRUD operations, summaries, trends, and insights for expenses")
 public class ExpenseController {
 
+    private static final Logger log = LoggerFactory.getLogger(ExpenseController.class);
+
     private final ExpenseService expenseService;
 
     public ExpenseController(ExpenseService expenseService) {
@@ -55,18 +59,22 @@ public class ExpenseController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
+        log.info("Listing expenses (year={}, month={}, category={}, q={}, page={})",
+                year, month, category, q, pageable.getPageNumber());
         return expenseService.list(new ExpenseFilters(year, month, category, q, from, to), pageable);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single expense by id")
     public ExpenseResponse getById(@PathVariable Long id) {
+        log.info("Fetching expense {}", id);
         return expenseService.getById(id);
     }
 
     @PostMapping
     @Operation(summary = "Create a new expense")
     public ResponseEntity<ExpenseResponse> create(@Valid @RequestBody ExpenseRequest request) {
+        log.info("Creating expense (category={}, date={})", request.category(), request.date());
         ExpenseResponse created = expenseService.create(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -78,12 +86,14 @@ public class ExpenseController {
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing expense")
     public ExpenseResponse update(@PathVariable Long id, @Valid @RequestBody ExpenseRequest request) {
+        log.info("Updating expense {}", id);
         return expenseService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete an expense")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("Deleting expense {}", id);
         expenseService.delete(id);
         return ResponseEntity.noContent().build();
     }
@@ -91,18 +101,21 @@ public class ExpenseController {
     @GetMapping("/summary")
     @Operation(summary = "Monthly totals grouped by category")
     public MonthlySummaryResponse summary(@RequestParam int year, @RequestParam int month) {
+        log.info("Fetching monthly summary for {}-{}", year, month);
         return expenseService.monthlySummary(year, month);
     }
 
     @GetMapping("/trend")
     @Operation(summary = "Monthly spending totals for the last N months (default 6)")
     public List<MonthTotal> trend(@RequestParam(defaultValue = "6") int months) {
+        log.info("Fetching {}-month trend", months);
         return expenseService.trend(months);
     }
 
     @GetMapping("/insights")
     @Operation(summary = "Human-readable spending insights for a month vs the previous one")
     public List<InsightResponse> insights(@RequestParam int year, @RequestParam int month) {
+        log.info("Fetching insights for {}-{}", year, month);
         return expenseService.insights(year, month);
     }
 
@@ -115,6 +128,7 @@ public class ExpenseController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        log.info("Exporting expenses to CSV (year={}, month={}, category={})", year, month, category);
         String csv = expenseService.exportCsv(new ExpenseFilters(year, month, category, q, from, to));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"expenses.csv\"")
