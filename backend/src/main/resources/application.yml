@@ -26,3 +26,9 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+# LOG_LEVEL controls the app's own logging (access log + business logic);
+# bump to DEBUG on Render when investigating a failure, no redeploy needed.
+logging:
+  level:
+    com.abishek.expensetracker: ${LOG_LEVEL:INFO}

@@ -6,6 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -23,6 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 public class AuthRateLimitFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthRateLimitFilter.class);
 
     private static final int MAX_REQUESTS = 20;
     private static final long WINDOW_MILLIS = 60_000;
@@ -64,6 +68,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         }
 
         if (limited) {
+            log.warn("Rate limit exceeded for {} on {} {}", ip, request.getMethod(), request.getRequestURI());
             response.setStatus(429);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             ApiError body = ApiError.of(429, "Too Many Requests",
