@@ -14,9 +14,14 @@ import { useInsights, useMonthlySummary, useTrend } from '../hooks/useExpenses';
 import { formatCurrency, titleCase } from '../lib/format';
 
 function AnimatedCurrency({ value }: { value: number }) {
-  const animated = useCountUp(value);
+  const animated = useCountUp(value, 400);
   return <>{formatCurrency(animated)}</>;
 }
+
+const card =
+  'rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900';
+const sectionTitle =
+  'mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400';
 
 export default function DashboardPage() {
   const now = new Date();
@@ -29,18 +34,19 @@ export default function DashboardPage() {
   const budgets = useBudgets();
 
   const topCategory = summary.data?.byCategory[0];
+  const totalChange = insights.data?.find((i) => i.type === 'TOTAL_CHANGE')?.changePercent;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-5"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
-          <p className="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
+          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Dashboard</h2>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             Your spending at a glance
           </p>
         </div>
@@ -61,28 +67,53 @@ export default function DashboardPage() {
 
       {summary.data && (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 p-5 text-white shadow-lg shadow-indigo-600/20">
-              <p className="text-sm text-indigo-100">Total spent</p>
-              <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            <div className={card}>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Total spent
+                </p>
+                {typeof totalChange === 'number' && (
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
+                      totalChange >= 0
+                        ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300'
+                        : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'
+                    }`}
+                  >
+                    {totalChange >= 0 ? '+' : ''}
+                    {totalChange.toFixed(0)}%
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl">
                 <AnimatedCurrency value={summary.data.total} />
               </p>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Top category</p>
-              <p className="mt-1 text-2xl font-semibold">
+
+            <div className={card}>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Top category
+              </p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight lg:text-3xl">
                 {topCategory ? titleCase(topCategory.category) : '—'}
               </p>
               {topCategory && (
-                <p className="text-sm text-gray-400 dark:text-gray-500">
+                <p className="mt-0.5 text-sm tabular-nums text-slate-400 dark:text-slate-500">
                   {formatCurrency(topCategory.total)}
                 </p>
               )}
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Categories used</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">
+
+            <div className={card}>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Categories used
+              </p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl">
                 {summary.data.byCategory.length}
+              </p>
+              <p className="mt-0.5 text-sm text-slate-400 dark:text-slate-500">
+                of 8 {summary.data.byCategory.length === 1 ? 'category' : 'categories'}
               </p>
             </div>
           </div>
@@ -90,24 +121,18 @@ export default function DashboardPage() {
           {insights.data && <InsightsRow insights={insights.data} />}
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Spending by category
-              </h3>
+            <div className={card}>
+              <h3 className={sectionTitle}>Spending by category</h3>
               <CategoryPieChart data={summary.data.byCategory} year={year} month={month} />
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Last 6 months
-              </h3>
+            <div className={card}>
+              <h3 className={sectionTitle}>Last 6 months</h3>
               {trend.data ? <TrendChart data={trend.data} /> : <SkeletonChart />}
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Budgets this month
-            </h3>
+          <div className={card}>
+            <h3 className={sectionTitle}>Budgets this month</h3>
             <BudgetProgress budgets={budgets.data ?? []} spending={summary.data.byCategory} />
           </div>
         </>

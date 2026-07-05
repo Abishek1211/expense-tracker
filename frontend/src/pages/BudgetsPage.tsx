@@ -50,16 +50,22 @@ function BudgetRow({ category, budget, spent }: BudgetRowProps) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
           <span
-            className="h-3 w-3 rounded-full"
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: CATEGORY_COLORS[category] }}
           />
           <span className="font-medium">{titleCase(category)}</span>
           {budget !== null && (
-            <span className={`text-sm ${over ? 'font-semibold text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+            <span
+              className={`text-sm tabular-nums ${
+                over
+                  ? 'font-semibold text-red-600 dark:text-red-400'
+                  : 'text-slate-400 dark:text-slate-500'
+              }`}
+            >
               {formatCurrency(spent)} spent
             </span>
           )}
@@ -73,13 +79,13 @@ function BudgetRow({ category, budget, spent }: BudgetRowProps) {
             onChange={(event) => setValue(event.target.value)}
             placeholder="No budget"
             aria-label={`${titleCase(category)} budget`}
-            className="w-32 rounded-md border border-gray-300 px-3 py-1.5 text-right text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+            className="w-full min-w-0 rounded-md border border-slate-300 px-3 py-1.5 text-right text-sm tabular-nums shadow-sm transition-colors focus:border-emerald-500 focus:outline-none sm:w-32 dark:border-slate-700 dark:bg-slate-800"
           />
           <button
             type="button"
             onClick={save}
             disabled={!dirty || upsertMutation.isPending}
-            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-40"
+            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-40"
           >
             Save
           </button>
@@ -88,7 +94,7 @@ function BudgetRow({ category, budget, spent }: BudgetRowProps) {
               type="button"
               onClick={remove}
               disabled={deleteMutation.isPending}
-              className="rounded-md px-2 py-1.5 text-sm font-medium text-red-500 transition hover:bg-red-50 dark:hover:bg-red-950/50"
+              className="rounded-md px-2 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
             >
               Remove
             </button>
@@ -96,13 +102,13 @@ function BudgetRow({ category, budget, spent }: BudgetRowProps) {
         </div>
       </div>
       {budget !== null && (
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
           <motion.div
             className="h-full rounded-full"
-            style={{ backgroundColor: over ? '#ef4444' : CATEGORY_COLORS[category] }}
+            style={{ backgroundColor: over ? '#dc2626' : CATEGORY_COLORS[category] }}
             initial={{ width: 0 }}
             animate={{ width: `${ratio * 100}%` }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
           />
         </div>
       )}
@@ -129,19 +135,19 @@ export default function BudgetsPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-5"
     >
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Budgets</h2>
-        <p className="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
+        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Budgets</h2>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
           Monthly limits per category — progress reflects the current month
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {CATEGORIES.map((category) => (
           <BudgetRow
             key={category}

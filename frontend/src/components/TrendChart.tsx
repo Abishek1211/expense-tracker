@@ -16,8 +16,8 @@ export default function TrendChart({ data }: { data: MonthTotal[] }) {
         <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
+              <stop offset="0%" stopColor="#059669" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="#059669" stopOpacity={0.02} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
@@ -39,7 +39,7 @@ export default function TrendChart({ data }: { data: MonthTotal[] }) {
             contentStyle={{
               backgroundColor: 'var(--chart-tooltip-bg)',
               border: '1px solid var(--chart-tooltip-border)',
-              borderRadius: 8,
+              borderRadius: 6,
               color: 'var(--chart-tooltip-text)',
             }}
             itemStyle={{ color: 'var(--chart-tooltip-text)' }}
@@ -47,10 +47,10 @@ export default function TrendChart({ data }: { data: MonthTotal[] }) {
           <Area
             type="monotone"
             dataKey="total"
-            stroke="#6366f1"
-            strokeWidth={2.5}
+            stroke="#059669"
+            strokeWidth={2}
             fill="url(#trendFill)"
-            animationDuration={700}
+            animationDuration={500}
           />
         </AreaChart>
       </ResponsiveContainer>

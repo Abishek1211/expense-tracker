@@ -83,31 +83,33 @@ export default function ExpensesPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-5"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Expenses</h2>
-          <p className="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
-            {data ? `${data.page.totalElements} record${data.page.totalElements === 1 ? '' : 's'}` : ' '}
+          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Expenses</h2>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            {data
+              ? `${data.page.totalElements} record${data.page.totalElements === 1 ? '' : 's'}`
+              : ' '}
           </p>
         </div>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={handleExport}
-            className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             <DownloadIcon width={15} height={15} />
-            CSV
+            <span className="hidden sm:inline">CSV</span>
           </button>
           <button
             type="button"
             onClick={openCreate}
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
+            className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 sm:px-3.5"
           >
             <PlusIcon width={15} height={15} />
             Add expense
@@ -115,21 +117,24 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <MonthPicker
-          year={year}
-          month={month}
-          onChange={(nextYear, nextMonth) =>
-            updateParams({ year: String(nextYear), month: String(nextMonth) })
-          }
-        />
+      {/* Filters: single row on desktop, stacked grid on phones */}
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+        <div className="col-span-2 sm:col-span-1">
+          <MonthPicker
+            year={year}
+            month={month}
+            onChange={(nextYear, nextMonth) =>
+              updateParams({ year: String(nextYear), month: String(nextMonth) })
+            }
+          />
+        </div>
         <select
           value={category}
           onChange={(event) =>
             updateParams({ category: event.target.value === '' ? null : event.target.value })
           }
           aria-label="Filter by category"
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900"
+          className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
         >
           <option value="">All categories</option>
           {CATEGORIES.map((option) => (
@@ -138,8 +143,8 @@ export default function ExpensesPage() {
             </option>
           ))}
         </select>
-        <div className="relative min-w-48 flex-1 sm:max-w-xs">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <div className="relative sm:min-w-56 sm:flex-1 sm:max-w-xs">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
             <SearchIcon width={15} height={15} />
           </span>
           <input
@@ -150,7 +155,7 @@ export default function ExpensesPage() {
               setPage(0);
             }}
             placeholder="Search notes…"
-            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900"
+            className="w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm transition-colors focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
           />
         </div>
       </div>
@@ -163,23 +168,23 @@ export default function ExpensesPage() {
           <ExpenseTable expenses={data.content} onEdit={openEdit} />
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
               <button
                 type="button"
                 disabled={page === 0}
                 onClick={() => setPage((prev) => prev - 1)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium transition hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
               >
                 Previous
               </button>
-              <span>
+              <span className="tabular-nums">
                 Page {page + 1} of {totalPages}
               </span>
               <button
                 type="button"
                 disabled={page + 1 >= totalPages}
                 onClick={() => setPage((prev) => prev + 1)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium transition hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
               >
                 Next
               </button>

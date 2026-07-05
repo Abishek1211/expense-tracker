@@ -9,20 +9,41 @@
 
 :root {
   --chart-tooltip-bg: #ffffff;
-  --chart-tooltip-border: #e5e7eb;
-  --chart-tooltip-text: #111827;
-  --chart-grid: #e5e7eb;
-  --chart-axis: #9ca3af;
+  --chart-tooltip-border: #e2e8f0;
+  --chart-tooltip-text: #0f172a;
+  --chart-grid: #e2e8f0;
+  --chart-axis: #94a3b8;
 }
 
 .dark {
-  --chart-tooltip-bg: #1f2937;
-  --chart-tooltip-border: #374151;
-  --chart-tooltip-text: #f9fafb;
-  --chart-grid: #374151;
-  --chart-axis: #6b7280;
+  --chart-tooltip-bg: #1e293b;
+  --chart-tooltip-border: #334155;
+  --chart-tooltip-text: #f8fafc;
+  --chart-grid: #334155;
+  --chart-axis: #64748b;
 }
 
 body {
-  @apply bg-gray-50 font-sans text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+  @apply bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+}
+
+/* Unobtrusive scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-300 dark:bg-slate-700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
