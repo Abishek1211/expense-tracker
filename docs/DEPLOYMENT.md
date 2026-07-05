@@ -72,3 +72,23 @@ cd backend
 docker build -t expense-tracker-api .
 docker run -p 8080:8080 --env-file .env expense-tracker-api   # copy .env.example → .env first
 ```
+
+## Monitoring & logs during a failure
+
+**Backend (Render):** open your web service → **Logs** tab. Every request is logged as one
+line — `METHOD path -> status (Xms)` — at a level matching its outcome: `INFO` for success,
+`WARN` for 4xx, `ERROR` for 5xx, so failures are easy to spot or filter for. Unhandled
+exceptions additionally log a full stack trace. To get more detail temporarily (e.g. while
+chasing a bug), set the `LOG_LEVEL` env var to `DEBUG` and let Render redeploy — no code
+change needed, just flip it back to `INFO` (or unset it) afterward.
+
+**Frontend (Vercel):** a static SPA has no server process, so Vercel's dashboard normally
+shows nothing about client-side failures — only build logs. To close that gap, the app posts
+uncaught errors (React render crashes, unhandled promise rejections, and failed API calls
+with no response or a 5xx/429 status) to `/api/log-client-error`, a small Vercel serverless
+function that exists solely to `console.error` them. Check your Vercel project → the relevant
+deployment → **Functions**/**Runtime Logs** tab. Everything is also logged to the browser
+console regardless of environment, so DevTools is the fastest path while reproducing something
+yourself. Expected 4xx errors (wrong password, validation failures) are deliberately **not**
+forwarded there — only genuine operational failures are, to keep the log signal-to-noise
+useful.

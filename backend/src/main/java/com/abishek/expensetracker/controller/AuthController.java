@@ -7,6 +7,8 @@ import com.abishek.expensetracker.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Auth", description = "Registration and login, returning a JWT bearer token")
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
     private final AuthService authService;
 
     public AuthController(AuthService authService) {
@@ -28,12 +32,16 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "Register a new account and receive a JWT")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        // Never log request.password() here or anywhere else.
+        log.info("Register attempt for email {}", request.email());
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 
     @PostMapping("/login")
     @Operation(summary = "Log in with email and password, receiving a JWT")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+        // Never log request.password() here or anywhere else.
+        log.info("Login attempt for email {}", request.email());
         return authService.login(request);
     }
 }

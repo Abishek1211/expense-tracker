@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { clearAuth, getToken } from '../lib/authStorage';
+import { reportError } from '../lib/logger';
 import type { ApiErrorBody } from '../types/expense';
 
 export const apiClient = axios.create({
@@ -28,6 +29,20 @@ apiClient.interceptors.response.use(
         window.location.assign('/login');
       }
     }
+
+    // Report genuine failures (no response at all, or the server erroring/
+    // rate-limiting), not expected client errors like 400 validation or a
+    // wrong password — those are normal user input, not operational issues.
+    const status = error.response?.status;
+    if (status === undefined || status >= 500 || status === 429) {
+      reportError(error, {
+        source: 'api-client',
+        method: error.config?.method,
+        url: error.config?.url,
+        status,
+      });
+    }
+
     return Promise.reject(error);
   },
 );

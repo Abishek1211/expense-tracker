@@ -19,6 +19,7 @@ optimistic UI with undo · a one-click **demo account** so you can try it withou
 
 **Live demo:** _frontend URL placeholder_ · **API docs:** _backend URL placeholder_`/swagger-ui.html`
 
+
 ## Tech Stack
 
 | Layer      | Technology                                                              |
