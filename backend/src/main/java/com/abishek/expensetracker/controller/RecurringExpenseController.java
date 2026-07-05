@@ -6,6 +6,8 @@ import com.abishek.expensetracker.service.RecurringExpenseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,6 +26,8 @@ import java.util.List;
 @Tag(name = "Recurring expenses", description = "Monthly recurring expense definitions (rent, subscriptions, …)")
 public class RecurringExpenseController {
 
+    private static final Logger log = LoggerFactory.getLogger(RecurringExpenseController.class);
+
     private final RecurringExpenseService recurringExpenseService;
 
     public RecurringExpenseController(RecurringExpenseService recurringExpenseService) {
@@ -33,6 +37,7 @@ public class RecurringExpenseController {
     @GetMapping
     @Operation(summary = "List the current user's recurring expenses")
     public List<RecurringExpenseResponse> list() {
+        log.info("Listing recurring expenses");
         return recurringExpenseService.list();
     }
 
@@ -40,6 +45,8 @@ public class RecurringExpenseController {
     @Operation(summary = "Create a recurring expense definition")
     public ResponseEntity<RecurringExpenseResponse> create(
             @Valid @RequestBody RecurringExpenseRequest request) {
+        log.info("Creating recurring expense (category={}, dayOfMonth={})",
+                request.category(), request.dayOfMonth());
         return ResponseEntity.status(HttpStatus.CREATED).body(recurringExpenseService.create(request));
     }
 
@@ -47,12 +54,14 @@ public class RecurringExpenseController {
     @Operation(summary = "Update a recurring expense definition")
     public RecurringExpenseResponse update(
             @PathVariable Long id, @Valid @RequestBody RecurringExpenseRequest request) {
+        log.info("Updating recurring expense {}", id);
         return recurringExpenseService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a recurring expense definition")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("Deleting recurring expense {}", id);
         recurringExpenseService.delete(id);
         return ResponseEntity.noContent().build();
     }
