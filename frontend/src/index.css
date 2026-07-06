@@ -9,69 +9,34 @@
 
 :root {
   --chart-tooltip-bg: #ffffff;
-  --chart-tooltip-border: #e5e7eb;
-  --chart-tooltip-text: #111827;
-  --chart-grid: #e5e7eb;
-  --chart-axis: #9ca3af;
+  --chart-tooltip-border: #e2e8f0;
+  --chart-tooltip-text: #0f172a;
+  --chart-grid: #e2e8f0;
+  --chart-axis: #94a3b8;
 }
 
 .dark {
-  --chart-tooltip-bg: #1f2937;
-  --chart-tooltip-border: #374151;
-  --chart-tooltip-text: #f9fafb;
-  --chart-grid: #374151;
-  --chart-axis: #6b7280;
+  --chart-tooltip-bg: #1e293b;
+  --chart-tooltip-border: #334155;
+  --chart-tooltip-text: #f8fafc;
+  --chart-grid: #334155;
+  --chart-axis: #64748b;
 }
 
 body {
-  @apply bg-gray-50 font-sans text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+  @apply bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
 }
 
-/* Aurora background — soft, fixed colour blooms behind all content. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(42rem 42rem at 12% -8%, rgba(99, 102, 241, 0.14), transparent 60%),
-    radial-gradient(38rem 38rem at 100% 0%, rgba(139, 92, 246, 0.12), transparent 55%),
-    radial-gradient(46rem 46rem at 50% 120%, rgba(236, 72, 153, 0.08), transparent 60%);
-}
-
-.dark body::before {
-  background:
-    radial-gradient(42rem 42rem at 12% -8%, rgba(99, 102, 241, 0.22), transparent 60%),
-    radial-gradient(38rem 38rem at 100% 0%, rgba(139, 92, 246, 0.16), transparent 55%),
-    radial-gradient(46rem 46rem at 50% 120%, rgba(236, 72, 153, 0.10), transparent 60%);
-}
-
-/* Frosted-glass surface used for cards and panels. */
-@utility glass {
-  @apply border border-gray-200/80 bg-white/80 shadow-sm backdrop-blur-xl;
-  @apply dark:border-white/10 dark:bg-white/[0.04];
-}
-
-/* Custom scrollbar */
+/* Unobtrusive scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-gray-300 dark:bg-gray-700;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-600;
-}
-
-::selection {
-  @apply bg-indigo-500/25;
+  @apply rounded-full bg-slate-300 dark:bg-slate-700;
 }
 
 @media (prefers-reduced-motion: reduce) {

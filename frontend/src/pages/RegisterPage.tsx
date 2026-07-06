@@ -1,5 +1,4 @@
-﻿import { useState, type FormEvent } from 'react';
-import { motion } from 'framer-motion';
+import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../api/auth';
 import { extractApiError } from '../api/client';
@@ -71,37 +70,35 @@ export default function RegisterPage() {
   };
 
   const inputClass = (field: string) =>
-    `w-full rounded-md border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 dark:bg-gray-800 ${
+    `w-full rounded-md border px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 dark:bg-slate-800 ${
       errors[field]
-        ? 'border-red-300 focus:ring-red-200 dark:border-red-700'
-        : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200 dark:border-gray-700 dark:focus:ring-indigo-900'
+        ? 'border-red-300 focus:ring-red-200 dark:border-red-800'
+        : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-600/20 dark:border-slate-700'
     }`;
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-sm"
-      >
+      <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-600/25">
-            <WalletIcon width={22} height={22} />
+          <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-600 text-white">
+            <WalletIcon width={20} height={20} />
           </span>
-          <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Start tracking your expenses in minutes
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+          className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           noValidate
         >
           <div>
-            <label htmlFor="displayName" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="displayName"
+              className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
               Display name
             </label>
             <input
@@ -114,12 +111,15 @@ export default function RegisterPage() {
               placeholder="Abishek"
             />
             {errors.displayName && (
-              <p className="mt-1 text-xs text-red-600">{errors.displayName}</p>
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.displayName}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="email"
+              className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
               Email
             </label>
             <input
@@ -131,11 +131,16 @@ export default function RegisterPage() {
               className={inputClass('email')}
               placeholder="you@example.com"
             />
-            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.email}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="password"
+              className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
               Password
             </label>
             <input
@@ -147,29 +152,36 @@ export default function RegisterPage() {
               className={inputClass('password')}
               placeholder="At least 8 characters"
             />
-            {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
+            {errors.password && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.password}</p>
+            )}
           </div>
 
           {submitError && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">{submitError}</p>
+            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
+              {submitError}
+            </p>
           )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
           >
             {submitting ? 'Creating account…' : 'Create account'}
           </button>
 
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">
+            <Link
+              to="/login"
+              className="font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+            >
               Sign in
             </Link>
           </p>
         </form>
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -3,12 +3,10 @@ import { motion } from 'framer-motion';
 import BudgetProgress from '../components/BudgetProgress';
 import CategoryPieChart from '../components/CategoryPieChart';
 import ErrorMessage from '../components/ErrorMessage';
-import { LayersIcon, TagIcon, WalletIcon } from '../components/Icons';
 import InsightsRow from '../components/InsightsRow';
 import MonthPicker from '../components/MonthPicker';
 import QuickAdd from '../components/QuickAdd';
 import { SkeletonCards, SkeletonChart } from '../components/Skeletons';
-import StatCard from '../components/StatCard';
 import TrendChart from '../components/TrendChart';
 import { useBudgets } from '../hooks/useBudgets';
 import { useCountUp } from '../hooks/useCountUp';
@@ -16,12 +14,14 @@ import { useInsights, useMonthlySummary, useTrend } from '../hooks/useExpenses';
 import { formatCurrency, titleCase } from '../lib/format';
 
 function AnimatedCurrency({ value }: { value: number }) {
-  const animated = useCountUp(value);
+  const animated = useCountUp(value, 400);
   return <>{formatCurrency(animated)}</>;
 }
 
-const panel =
-  'glass rounded-2xl p-5 transition-shadow hover:shadow-md';
+const card =
+  'rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900';
+const sectionTitle =
+  'mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400';
 
 export default function DashboardPage() {
   const now = new Date();
@@ -38,15 +38,15 @@ export default function DashboardPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-5"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
-          <p className="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
+          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Dashboard</h2>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             Your spending at a glance
           </p>
         </div>
@@ -67,72 +67,74 @@ export default function DashboardPage() {
 
       {summary.data && (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard
-              featured
-              index={0}
-              label="Total spent"
-              icon={<WalletIcon width={18} height={18} />}
-              value={<AnimatedCurrency value={summary.data.total} />}
-              changePercent={totalChange}
-              sub={totalChange !== undefined ? 'vs last month' : undefined}
-            />
-            <StatCard
-              index={1}
-              label="Top category"
-              icon={<TagIcon width={18} height={18} />}
-              value={topCategory ? titleCase(topCategory.category) : '—'}
-              sub={topCategory ? formatCurrency(topCategory.total) : undefined}
-            />
-            <StatCard
-              index={2}
-              label="Categories used"
-              icon={<LayersIcon width={18} height={18} />}
-              value={summary.data.byCategory.length}
-              sub={summary.data.byCategory.length === 1 ? 'category' : 'categories'}
-            />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+            <div className={card}>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Total spent
+                </p>
+                {typeof totalChange === 'number' && (
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
+                      totalChange >= 0
+                        ? 'bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300'
+                        : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'
+                    }`}
+                  >
+                    {totalChange >= 0 ? '+' : ''}
+                    {totalChange.toFixed(0)}%
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl">
+                <AnimatedCurrency value={summary.data.total} />
+              </p>
+            </div>
+
+            <div className={card}>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Top category
+              </p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight lg:text-3xl">
+                {topCategory ? titleCase(topCategory.category) : '—'}
+              </p>
+              {topCategory && (
+                <p className="mt-0.5 text-sm tabular-nums text-slate-400 dark:text-slate-500">
+                  {formatCurrency(topCategory.total)}
+                </p>
+              )}
+            </div>
+
+            <div className={card}>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Categories used
+              </p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl">
+                {summary.data.byCategory.length}
+              </p>
+              <p className="mt-0.5 text-sm text-slate-400 dark:text-slate-500">
+                of 8 {summary.data.byCategory.length === 1 ? 'category' : 'categories'}
+              </p>
+            </div>
           </div>
 
           {insights.data && <InsightsRow insights={insights.data} />}
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.4 }}
-              whileHover={{ y: -3 }}
-              className={panel}
-            >
-              <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Spending by category
-              </h3>
+            <div className={card}>
+              <h3 className={sectionTitle}>Spending by category</h3>
               <CategoryPieChart data={summary.data.byCategory} year={year} month={month} />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.18, duration: 0.4 }}
-              whileHover={{ y: -3 }}
-              className={panel}
-            >
-              <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Last 6 months
-              </h3>
+            </div>
+            <div className={card}>
+              <h3 className={sectionTitle}>Last 6 months</h3>
               {trend.data ? <TrendChart data={trend.data} /> : <SkeletonChart />}
-            </motion.div>
+            </div>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.26, duration: 0.4 }}
-            className={panel}
-          >
-            <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Budgets this month
-            </h3>
+          <div className={card}>
+            <h3 className={sectionTitle}>Budgets this month</h3>
             <BudgetProgress budgets={budgets.data ?? []} spending={summary.data.byCategory} />
-          </motion.div>
+          </div>
         </>
       )}
     </motion.div>

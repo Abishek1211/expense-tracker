@@ -15,9 +15,9 @@ export default function CategoryPieChart({ data, year, month }: CategoryPieChart
 
   if (data.length === 0) {
     return (
-      <div className="flex h-72 flex-col items-center justify-center gap-2 text-sm text-gray-400 dark:text-gray-500">
+      <div className="flex h-72 flex-col items-center justify-center gap-1 text-sm text-slate-400 dark:text-slate-500">
         <p>No expenses this month yet</p>
-        <p className="text-xs">Add one and the chart comes alive</p>
+        <p className="text-xs">Add one and the chart fills in</p>
       </div>
     );
   }
@@ -57,7 +57,7 @@ export default function CategoryPieChart({ data, year, month }: CategoryPieChart
             contentStyle={{
               backgroundColor: 'var(--chart-tooltip-bg)',
               border: '1px solid var(--chart-tooltip-border)',
-              borderRadius: 8,
+              borderRadius: 6,
               color: 'var(--chart-tooltip-text)',
             }}
             itemStyle={{ color: 'var(--chart-tooltip-text)' }}
@@ -65,7 +65,7 @@ export default function CategoryPieChart({ data, year, month }: CategoryPieChart
           <Legend iconType="circle" iconSize={8} />
         </PieChart>
       </ResponsiveContainer>
-      <p className="mt-1 text-center text-xs text-gray-400 dark:text-gray-500">
+      <p className="mt-1 text-center text-xs text-slate-400 dark:text-slate-500">
         Click a slice to see those expenses
       </p>
     </div>

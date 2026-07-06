@@ -111,10 +111,10 @@ export default function ExpenseFormModal({ open, expense, onClose }: ExpenseForm
   };
 
   const inputClass = (field: string) =>
-    `w-full rounded-md border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 dark:bg-gray-800 dark:text-gray-100 ${
+    `w-full rounded-md border px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 dark:bg-slate-800 dark:text-slate-100 ${
       errors[field]
-        ? 'border-red-300 focus:ring-red-200 dark:border-red-700'
-        : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200 dark:border-gray-700 dark:focus:ring-indigo-900'
+        ? 'border-red-300 focus:ring-red-200 dark:border-red-800'
+        : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-600/20 dark:border-slate-700'
     }`;
 
   return (
@@ -124,22 +124,26 @@ export default function ExpenseFormModal({ open, expense, onClose }: ExpenseForm
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          transition={{ duration: 0.15 }}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4"
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 16 }}
+            initial={{ opacity: 0, scale: 0.98, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 8 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900 dark:ring-1 dark:ring-gray-800"
+            exit={{ opacity: 0, scale: 0.98, y: 8 }}
+            transition={{ duration: 0.15 }}
+            className="w-full max-w-md rounded-t-xl bg-white p-5 shadow-xl sm:rounded-lg sm:p-6 dark:bg-slate-900 dark:ring-1 dark:ring-slate-800"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold">{expense ? 'Edit expense' : 'Add expense'}</h2>
+            <h2 className="text-base font-semibold">{expense ? 'Edit expense' : 'Add expense'}</h2>
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4" noValidate>
               <div>
-                <label htmlFor="amount" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="amount"
+                  className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
                   Amount
                 </label>
                 <input
@@ -154,12 +158,15 @@ export default function ExpenseFormModal({ open, expense, onClose }: ExpenseForm
                   placeholder="0.00"
                   autoFocus
                 />
-                {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount}</p>}
+                {errors.amount && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.amount}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="category" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="category"
+                    className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                  >
                     Category
                   </label>
                   <select
@@ -174,11 +181,16 @@ export default function ExpenseFormModal({ open, expense, onClose }: ExpenseForm
                       </option>
                     ))}
                   </select>
-                  {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category}</p>}
+                  {errors.category && (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.category}</p>
+                  )}
                 </div>
 
                 <div>
-                  <label htmlFor="date" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="date"
+                    className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                  >
                     Date
                   </label>
                   <input
@@ -188,13 +200,16 @@ export default function ExpenseFormModal({ open, expense, onClose }: ExpenseForm
                     onChange={(event) => setField('date', event.target.value)}
                     className={inputClass('date')}
                   />
-                  {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+                  {errors.date && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.date}</p>}
                 </div>
               </div>
 
               <div>
-                <label htmlFor="note" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Note <span className="font-normal text-gray-400">(optional)</span>
+                <label
+                  htmlFor="note"
+                  className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  Note <span className="font-normal text-slate-400">(optional)</span>
                 </label>
                 <textarea
                   id="note"
@@ -205,27 +220,27 @@ export default function ExpenseFormModal({ open, expense, onClose }: ExpenseForm
                   className={inputClass('note')}
                   placeholder="What was this for?"
                 />
-                {errors.note && <p className="mt-1 text-xs text-red-500">{errors.note}</p>}
+                {errors.note && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.note}</p>}
               </div>
 
               {submitError && (
-                <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
+                <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
                   {submitError}
                 </p>
               )}
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-60"
+                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
                 >
                   {isPending ? 'Saving…' : expense ? 'Save changes' : 'Add expense'}
                 </button>

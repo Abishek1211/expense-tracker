@@ -119,29 +119,31 @@ export default function RecurringPage() {
   };
 
   const inputClass =
-    'rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800';
+    'rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800';
+  const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-5"
     >
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Recurring expenses</h2>
-        <p className="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
+        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Recurring expenses</h2>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
           Rent, subscriptions, EMIs — added automatically every month
         </p>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="glass rounded-2xl p-4"
+        className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
-        <div className="flex flex-wrap items-end gap-3">
+        {/* 2-col grid on phones, single row on desktop */}
+        <div className="grid grid-cols-2 gap-3 lg:flex lg:flex-wrap lg:items-end">
           <div className="flex flex-col gap-1">
-            <label htmlFor="rec-amount" className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            <label htmlFor="rec-amount" className={labelClass}>
               Amount
             </label>
             <input
@@ -151,19 +153,19 @@ export default function RecurringPage() {
               min="0"
               value={values.amount}
               onChange={(event) => setField('amount', event.target.value)}
-              className={`${inputClass} w-28`}
+              className={`${inputClass} w-full lg:w-28`}
               placeholder="0.00"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="rec-category" className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            <label htmlFor="rec-category" className={labelClass}>
               Category
             </label>
             <select
               id="rec-category"
               value={values.category}
               onChange={(event) => setField('category', event.target.value)}
-              className={inputClass}
+              className={`${inputClass} w-full lg:w-auto`}
             >
               {CATEGORIES.map((category) => (
                 <option key={category} value={category}>
@@ -173,7 +175,7 @@ export default function RecurringPage() {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="rec-day" className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            <label htmlFor="rec-day" className={labelClass}>
               Day of month
             </label>
             <input
@@ -183,11 +185,11 @@ export default function RecurringPage() {
               max="31"
               value={values.dayOfMonth}
               onChange={(event) => setField('dayOfMonth', event.target.value)}
-              className={`${inputClass} w-20`}
+              className={`${inputClass} w-full lg:w-20`}
             />
           </div>
-          <div className="flex min-w-40 flex-1 flex-col gap-1">
-            <label htmlFor="rec-note" className="text-xs font-medium text-gray-500 dark:text-gray-400">
+          <div className="flex flex-col gap-1 lg:min-w-40 lg:flex-1">
+            <label htmlFor="rec-note" className={labelClass}>
               Note
             </label>
             <input
@@ -196,15 +198,15 @@ export default function RecurringPage() {
               maxLength={500}
               value={values.note}
               onChange={(event) => setField('note', event.target.value)}
-              className={inputClass}
+              className={`${inputClass} w-full`}
               placeholder="e.g. Rent"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="col-span-2 flex gap-2 lg:col-span-1">
             <button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+              className="flex-1 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50 lg:flex-none"
             >
               {editingId !== null ? 'Save' : 'Add'}
             </button>
@@ -212,7 +214,7 @@ export default function RecurringPage() {
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>
@@ -225,58 +227,58 @@ export default function RecurringPage() {
       {isError && <ErrorMessage error={error} onRetry={() => refetch()} />}
 
       {data && data.length === 0 && (
-        <div className="rounded-xl border border-dashed border-gray-300 py-14 text-center text-sm text-gray-400 dark:border-gray-700 dark:text-gray-500">
+        <div className="rounded-lg border border-dashed border-slate-300 py-14 text-center text-sm text-slate-400 dark:border-slate-700 dark:text-slate-500">
           Nothing recurring yet — add your rent or a subscription above.
         </div>
       )}
 
       {data && data.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <AnimatePresence initial={false}>
             {data.map((item) => (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -24 }}
-                transition={{ duration: 0.25 }}
-                className={`glass flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 transition-shadow hover:shadow-md ${
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className={`flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900 ${
                   item.active ? '' : 'opacity-60'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span
-                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${CATEGORY_BADGE_CLASSES[item.category]}`}
+                    className={`inline-block rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${CATEGORY_BADGE_CLASSES[item.category]}`}
                   >
                     {titleCase(item.category)}
                   </span>
                   <div>
-                    <p className="font-semibold tabular-nums">{formatCurrency(item.amount)}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                    <p className="font-medium tabular-nums">{formatCurrency(item.amount)}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
                       {item.note || 'No note'} · day {item.dayOfMonth} ·{' '}
                       {item.active ? `next on ${formatDate(item.nextRun)}` : 'paused'}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 text-xs font-medium">
+                <div className="flex items-center gap-4 text-xs font-medium sm:gap-3">
                   <button
                     type="button"
                     onClick={() => toggleActive(item)}
-                    className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                    className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                   >
                     {item.active ? 'Pause' : 'Resume'}
                   </button>
                   <button
                     type="button"
                     onClick={() => startEdit(item)}
-                    className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                    className="text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
                   >
                     Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => remove(item)}
-                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                   >
                     Delete
                   </button>
