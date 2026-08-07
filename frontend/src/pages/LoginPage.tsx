@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
 import { extractApiError } from '../api/client';
+import AuthBackground from '../components/AuthBackground';
 import { WalletIcon } from '../components/Icons';
 import { useAuth } from '../hooks/useAuth';
 
@@ -53,20 +54,21 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
+      <AuthBackground />
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-600 text-white">
+          <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-lg shadow-emerald-600/20">
             <WalletIcon width={20} height={20} />
           </span>
           <h1 className="text-xl font-semibold tracking-tight">Welcome back</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Sign in to your expense tracker
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+          className="space-y-4 rounded-xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/10 backdrop-blur-sm dark:border-slate-700/70 dark:bg-slate-900/90 dark:shadow-black/40"
           noValidate
         >
           <div>
@@ -119,11 +121,10 @@ export default function LoginPage() {
             {submitting ? 'Signing in…' : 'Sign in'}
           </button>
 
-          <div className="relative text-center">
-            <span className="relative z-10 bg-white px-2 text-xs text-slate-400 dark:bg-slate-900 dark:text-slate-500">
-              or
-            </span>
-            <span className="absolute inset-x-0 top-1/2 h-px bg-slate-200 dark:bg-slate-800" />
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+            <span className="text-xs text-slate-400 dark:text-slate-500">or</span>
+            <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
           </div>
 
           <button

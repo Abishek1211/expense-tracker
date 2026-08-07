@@ -1,5 +1,5 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { formatCurrency } from '../lib/format';
+import { formatCompactCurrency, formatCurrency } from '../lib/format';
 import type { MonthTotal } from '../types/budget';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -31,8 +31,8 @@ export default function TrendChart({ data }: { data: MonthTotal[] }) {
             tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
             axisLine={false}
             tickLine={false}
-            width={70}
-            tickFormatter={(value) => formatCurrency(Number(value)).replace(/\.00$/, '')}
+            width={52}
+            tickFormatter={(value) => formatCompactCurrency(Number(value))}
           />
           <Tooltip
             formatter={(value) => [formatCurrency(Number(value)), 'Spent']}

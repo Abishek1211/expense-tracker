@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CATEGORY_COLORS } from '../lib/categories';
-import { formatCurrency, titleCase } from '../lib/format';
+import { formatCompactCurrency, formatCurrency, titleCase } from '../lib/format';
 import type { Budget } from '../types/budget';
 import type { CategoryTotal } from '../types/expense';
 
@@ -40,11 +40,12 @@ export default function BudgetProgress({ budgets, spending }: BudgetProgressProp
             <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
               <span className="font-medium">{titleCase(budget.category)}</span>
               <span
+                title={`${formatCurrency(spent)} of ${formatCurrency(budget.amount)}`}
                 className={`tabular-nums ${
                   over ? 'font-semibold text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
-                {formatCurrency(spent)} / {formatCurrency(budget.amount)}
+                {formatCompactCurrency(spent)} / {formatCompactCurrency(budget.amount)}
               </span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
@@ -58,7 +59,7 @@ export default function BudgetProgress({ budgets, spending }: BudgetProgressProp
             </div>
             {over && (
               <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-                Over by {formatCurrency(spent - budget.amount)}
+                Over by {formatCompactCurrency(spent - budget.amount)}
               </p>
             )}
           </div>
