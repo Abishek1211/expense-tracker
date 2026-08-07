@@ -7,11 +7,14 @@ import InsightsRow from '../components/InsightsRow';
 import MonthPicker from '../components/MonthPicker';
 import QuickAdd from '../components/QuickAdd';
 import { SkeletonCards, SkeletonChart } from '../components/Skeletons';
+import Sparkline from '../components/Sparkline';
 import TrendChart from '../components/TrendChart';
 import { useBudgets } from '../hooks/useBudgets';
 import { useCountUp } from '../hooks/useCountUp';
 import { useInsights, useMonthlySummary, useTrend } from '../hooks/useExpenses';
+import { CATEGORY_COLORS } from '../lib/categories';
 import { formatCurrency, titleCase } from '../lib/format';
+import { CATEGORIES } from '../types/expense';
 
 function AnimatedCurrency({ value }: { value: number }) {
   const animated = useCountUp(value, 400);
@@ -22,6 +25,9 @@ const card =
   'rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900';
 const sectionTitle =
   'mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400';
+const microLabel = 'text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400';
+const statValue = 'text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl';
+const footNote = 'text-xs text-slate-400 dark:text-slate-500';
 
 export default function DashboardPage() {
   const now = new Date();
@@ -35,6 +41,9 @@ export default function DashboardPage() {
 
   const topCategory = summary.data?.byCategory[0];
   const totalChange = insights.data?.find((i) => i.type === 'TOTAL_CHANGE')?.changePercent;
+  const total = summary.data?.total ?? 0;
+  const topShare = topCategory && total > 0 ? (topCategory.total / total) * 100 : 0;
+  const usedCategories = new Set(summary.data?.byCategory.map((item) => item.category) ?? []);
 
   return (
     <motion.div
@@ -68,11 +77,10 @@ export default function DashboardPage() {
       {summary.data && (
         <>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-            <div className={card}>
+            {/* Total spent — headline figure, month-over-month delta, 6-month shape */}
+            <div className={`${card} flex flex-col`}>
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Total spent
-                </p>
+                <p className={microLabel}>Total spent</p>
                 {typeof totalChange === 'number' && (
                   <span
                     className={`rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
@@ -86,35 +94,76 @@ export default function DashboardPage() {
                   </span>
                 )}
               </div>
-              <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl">
+              <p className={`mt-2 ${statValue}`}>
                 <AnimatedCurrency value={summary.data.total} />
               </p>
-            </div>
-
-            <div className={card}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Top category
-              </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight lg:text-3xl">
-                {topCategory ? titleCase(topCategory.category) : '—'}
-              </p>
-              {topCategory && (
-                <p className="mt-0.5 text-sm tabular-nums text-slate-400 dark:text-slate-500">
-                  {formatCurrency(topCategory.total)}
-                </p>
+              {trend.data && trend.data.length > 1 && (
+                <div className="mt-auto pt-3">
+                  <Sparkline
+                    data={trend.data.map((point) => point.total)}
+                    className="text-emerald-600 dark:text-emerald-400"
+                  />
+                  <p className={`mt-1 ${footNote}`}>Last 6 months</p>
+                </div>
               )}
             </div>
 
-            <div className={card}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Categories used
+            {/* Top category — with its share of the month, not just an amount */}
+            <div className={`${card} flex flex-col`}>
+              <p className={microLabel}>Top category</p>
+              <p className={`mt-2 ${statValue}`}>
+                {topCategory ? titleCase(topCategory.category) : '—'}
               </p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight lg:text-3xl">
-                {summary.data.byCategory.length}
+              {topCategory && (
+                <div className="mt-auto pt-3">
+                  <div className="flex items-baseline justify-between gap-2 text-sm">
+                    <span className="tabular-nums text-slate-400 dark:text-slate-500">
+                      {formatCurrency(topCategory.total)}
+                    </span>
+                    <span className="font-semibold tabular-nums">{topShare.toFixed(0)}%</span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: CATEGORY_COLORS[topCategory.category] }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${topShare}%` }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    />
+                  </div>
+                  <p className={`mt-1 ${footNote}`}>of this month&rsquo;s spending</p>
+                </div>
+              )}
+            </div>
+
+            {/* Categories used — the dots show *which*, not just how many */}
+            <div className={`${card} flex flex-col`}>
+              <p className={microLabel}>Categories used</p>
+              <p className={`mt-2 ${statValue}`}>
+                {usedCategories.size}
+                <span className="text-base font-normal text-slate-400 dark:text-slate-500">
+                  {' / '}
+                  {CATEGORIES.length}
+                </span>
               </p>
-              <p className="mt-0.5 text-sm text-slate-400 dark:text-slate-500">
-                of 8 {summary.data.byCategory.length === 1 ? 'category' : 'categories'}
-              </p>
+              <div className="mt-auto pt-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {CATEGORIES.map((category) => (
+                    <span
+                      key={category}
+                      title={titleCase(category)}
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{
+                        backgroundColor: CATEGORY_COLORS[category],
+                        opacity: usedCategories.has(category) ? 1 : 0.18,
+                      }}
+                    />
+                  ))}
+                </div>
+                <p className={`mt-2 ${footNote}`}>
+                  {CATEGORIES.length - usedCategories.size} unused this month
+                </p>
+              </div>
             </div>
           </div>
 
