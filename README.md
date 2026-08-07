@@ -17,8 +17,17 @@ optimistic UI with undo · a one-click **demo account** so you can try it withou
 
 > 📷 _Screenshot placeholder — add a screenshot of the dashboard here._
 
-**Live demo:** _frontend URL placeholder_ · **API docs:** _backend URL placeholder_`/swagger-ui.html`
+### 🔗 Live demo
 
+| | |
+| --- | --- |
+| **App** | **https://expenses.abishekrajavelu.in** |
+| **API docs (Swagger)** | https://api.abishekrajavelu.in/swagger-ui.html |
+| **Health** | https://api.abishekrajavelu.in/actuator/health |
+
+Click **“Try the demo — no signup needed”** on the login screen, or sign in with
+`demo@expensetracker.app` / `demo-password-123`. The demo account is reseeded with six
+months of sample data every time the backend starts.
 
 ## Tech Stack
 
@@ -27,17 +36,20 @@ optimistic UI with undo · a one-click **demo account** so you can try it withou
 | Backend    | Java 21, Spring Boot 3.5, Spring Data JPA, Spring Security + JWT, Flyway, springdoc-openapi |
 | Frontend   | React 18, Vite, TypeScript, Tailwind CSS 4, TanStack Query, Recharts    |
 | Database   | PostgreSQL (prod), H2 in-memory (dev), Testcontainers (integration tests) |
-| Deployment | Render (backend, Docker) + Vercel (frontend)                            |
+| Deployment | Self-hosted on an **Oracle Cloud** VM via **Dokploy** — both halves are Docker containers behind a Traefik reverse proxy with automatic TLS |
 | CI         | GitHub Actions (path-filtered monorepo workflows)                       |
 
 ## Repository Layout
 
 ```
 expense-tracker/
-├── backend/     # Spring Boot REST API (Gradle, Kotlin DSL)
-├── frontend/    # React + Vite SPA
-├── docs/        # Architecture & deployment guides
-└── .github/     # CI workflows
+├── backend/            # Spring Boot REST API (Gradle, Kotlin DSL)
+│   └── Dockerfile      # multi-stage: Gradle build → JRE 21 runtime, non-root
+├── frontend/           # React + Vite SPA
+│   ├── Dockerfile      # multi-stage: Node build → nginx serving static assets
+│   └── nginx.conf      # SPA fallback + long-lived caching for hashed assets
+├── docs/               # Architecture & deployment guides
+└── .github/            # CI workflows
 ```
 
 ## Getting Started Locally
@@ -67,6 +79,22 @@ cd frontend
 cp .env.example .env       # points at http://localhost:8080 by default
 npm install
 npm run dev
+```
+
+### Running the containers locally
+
+Both halves ship production Dockerfiles — the same images the live deployment builds.
+
+```bash
+# backend → http://localhost:8080
+docker build -t expense-tracker-api ./backend
+docker run -p 8080:8080 --env-file backend/.env expense-tracker-api
+
+# frontend → http://localhost:3000
+# NOTE: Vite inlines env vars at BUILD time, so the API URL is a --build-arg, not -e
+docker build -t expense-tracker-web \
+  --build-arg VITE_API_BASE_URL=http://localhost:8080 ./frontend
+docker run -p 3000:80 expense-tracker-web
 ```
 
 ## API Summary
@@ -112,7 +140,7 @@ Errors follow a consistent shape:
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md) — layered design, request flow, DTO/mapper rationale
-- [Deployment](docs/DEPLOYMENT.md) — Render + Vercel step-by-step
+- [Deployment](docs/DEPLOYMENT.md) — Dokploy on Oracle Cloud, plus a Render + Vercel alternative
 - [Security](SECURITY.md) — JWT auth design, limitations, hardening ideas
 
 ## License

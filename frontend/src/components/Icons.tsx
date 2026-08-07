@@ -92,12 +92,6 @@ export const DownloadIcon = (props: IconProps) => (
   </svg>
 );
 
-export const SparklesIcon = (props: IconProps) => (
-  <svg {...base(props)}>
-    <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3z" />
-  </svg>
-);
-
 export const TrendUpIcon = (props: IconProps) => (
   <svg {...base(props)}>
     <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
@@ -117,20 +111,5 @@ export const WalletIcon = (props: IconProps) => (
     <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
     <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
     <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
-  </svg>
-);
-
-export const TagIcon = (props: IconProps) => (
-  <svg {...base(props)}>
-    <path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" />
-    <line x1="7" y1="7" x2="7.01" y2="7" />
-  </svg>
-);
-
-export const LayersIcon = (props: IconProps) => (
-  <svg {...base(props)}>
-    <polygon points="12 2 2 7 12 12 22 7 12 2" />
-    <polyline points="2 17 12 22 22 17" />
-    <polyline points="2 12 12 17 22 12" />
   </svg>
 );

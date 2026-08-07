@@ -18,10 +18,11 @@ npm-debug.log*
 .env.*.local
 *.pem
 
-# --- IDE ---
+# --- IDE / tooling ---
 .idea/
 *.iml
 .vscode/
+.claude/settings.local.json
 *.swp
 .DS_Store
 Thumbs.db
