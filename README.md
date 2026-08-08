@@ -15,7 +15,6 @@ monthly summaries, 6-month trend chart, and spending insights · category budget
 bars · recurring expenses (auto-created monthly) · search, filters, and CSV export · dark mode ·
 optimistic UI with undo · a one-click **demo account** so you can try it without registering.
 
-> 📷 _Screenshot placeholder — add a screenshot of the dashboard here._
 
 ### 🔗 Live demo
 
